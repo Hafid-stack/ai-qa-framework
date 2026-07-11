@@ -6,6 +6,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import utils.ConfigReader;
 
 public class BaseTest {
 
@@ -23,9 +24,12 @@ public class BaseTest {
             options.addArguments("--no-sandbox");
             options.addArguments("--disable-dev-shm-usage");
         }
+        //Maybe it is better to just maximize in the future
         options.addArguments("--window-size=1920,1080");
 
         driver = new ChromeDriver(options);
+        //to be tested
+        //driver.navigate().to();
     }
 
     @AfterMethod
@@ -33,5 +37,9 @@ public class BaseTest {
         if (driver != null) {
             driver.quit();
         }
+    }
+
+    protected void log(String message) {
+        System.out.println("[TEST LOG] "+message);
     }
 }

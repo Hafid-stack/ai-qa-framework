@@ -63,4 +63,8 @@ public class BasePage {
     protected void navigateTo(String url) {
         driver.get(url);
     }
+
+    protected void log(String message) {
+        System.out.println("[PAGE LOG] "+message);
+    }
 }

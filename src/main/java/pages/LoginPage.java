@@ -15,13 +15,9 @@ public class LoginPage extends BasePage {
     public LoginPage(WebDriver driver) {
         super(driver);
     }
-    //Will be replaced later on either by hiding the url,
-    // or using it directly in the before/base test
-//    public void open() {
-//        navigateTo("https://www.saucedemo.com/");
-//    }
+
     public void open() {
-        navigateTo(ConfigReader.get("base.url"));
+        navigateTo(ConfigReader.get("loginUrl"));
     }
 
     public void typeUsername(String username) {
