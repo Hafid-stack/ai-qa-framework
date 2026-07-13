@@ -34,4 +34,15 @@ public class LoginFlow extends BaseFlow {
 
         return loginPage;
     }
+
+    //Expected path
+    public LoginPage loginWithLockedUser(String username, String password) {
+        loginPage.open();
+        loginPage.typeUsername(username);
+        loginPage.typePassword(password);
+        loginPage.clickLogin();
+        //loginPage.getErrorMessage();
+
+        return loginPage;
+    }
 }
