@@ -1,4 +1,4 @@
-package ui.logintests;
+package ui.logintests.noflow;
 
 import base.BaseTest;
 import org.testng.Assert;
