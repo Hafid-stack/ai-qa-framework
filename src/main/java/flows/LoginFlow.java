@@ -25,12 +25,13 @@ public class LoginFlow extends BaseFlow {
         return  inventoryPage;
     }
     //Negative path
-    public InventoryPage loginWithInvalidUser(String username, String password) {
+    public LoginPage loginWithInvalidUser(String username, String password) {
         loginPage.open();
         loginPage.typeUsername(username);
         loginPage.typePassword(password);
         loginPage.clickLogin();
+        loginPage.getErrorMessage();
 
-        return  inventoryPage;
+        return loginPage;
     }
 }
