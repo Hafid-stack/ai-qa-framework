@@ -15,7 +15,7 @@ public class CheckoutStepOnePage extends BasePage {
         super(driver);
     }
 
-    public boolean isDisplayed(){
+    public boolean isCheckoutFormDisplayed(){
         return isDisplayed(checkoutContainer) && isDisplayed(firstNameField);
     }
 
