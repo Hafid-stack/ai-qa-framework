@@ -27,6 +27,8 @@ public class CartPage extends BasePage {
     }
     public int getProductsInCartCount(){
         return driver.findElements(productInCartName).size();
+//         List<WebElement> products= driver.findElements(productInCartName);
+//         return products.size();
     }
 
 }
