@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    environment {
+            CI = 'true'
+            CHROME_BIN = '/usr/bin/chromium'
+        }
 
     tools {
         jdk 'jdk17'

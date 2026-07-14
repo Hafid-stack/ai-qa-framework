@@ -21,6 +21,10 @@ public class BaseTest {
         ChromeOptions options = new ChromeOptions();
         // Headless is required for CI (GitHub Actions / Jenkins have no display).
         // Locally, it runs with a visible browser unless CI env var is set.
+        String chromeBin = System.getenv("CHROME_BIN");
+        if (chromeBin != null && !chromeBin.isEmpty()) {
+            options.setBinary(chromeBin);
+        }
         if (System.getenv("CI") != null) {
             options.addArguments("--headless=new");
             options.addArguments("--no-sandbox");
