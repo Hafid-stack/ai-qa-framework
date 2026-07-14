@@ -46,5 +46,8 @@ public class LoginPage extends BasePage {
         return getText(errorMessage);
     }
 
+    public boolean isLoginDisplayed() {
+        return isDisplayed(usernameInput) && isDisplayed(passwordInput);
+    }
 
 }

@@ -45,4 +45,15 @@ public class LoginFlow extends BaseFlow {
 
         return loginPage;
     }
+
+    public LoginPage logoutCorrectly(String username, String password) {
+        loginPage.open();
+        loginPage.typeUsername(username);
+        loginPage.typePassword(password);
+        loginPage.clickLogin();
+        inventoryPage.clickLogoutButton();
+
+        return  loginPage;
+    }
+
 }

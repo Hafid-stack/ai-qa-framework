@@ -8,6 +8,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import utils.ConfigReader;
 
+import java.util.Map;
+
 public class BaseTest {
 
     protected WebDriver driver;
@@ -27,6 +29,11 @@ public class BaseTest {
         }
         //Maybe it is better to just maximize in the future
         options.addArguments("--window-size=1920,1080");
+        options.addArguments("--disable-features=PasswordLeakDetection");
+        options.setExperimentalOption("prefs", Map.of(
+                "credentials_enable_service", false,
+                "profile.password_manager_enabled", false
+        ));
 
         driver = new ChromeDriver(options);
         //to be tested
