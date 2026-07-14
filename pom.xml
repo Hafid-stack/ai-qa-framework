@@ -26,7 +26,11 @@
             <artifactId>selenium-java</artifactId>
             <version>${selenium.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>net.datafaker</groupId>
+            <artifactId>datafaker</artifactId>
+            <version>2.4.2</version>
+        </dependency>
         <!-- WebDriverManager: auto-downloads the correct chromedriver binary -->
         <dependency>
             <groupId>io.github.bonigarcia</groupId>

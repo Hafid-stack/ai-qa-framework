@@ -9,6 +9,7 @@ import java.util.List;
 
 public class CartPage extends BasePage {
 
+    private final By checkoutBtn=By.cssSelector("[data-test='checkout']");
     private final By productInCartName=By.cssSelector("[data-test='inventory-item-name']");
     private final By cartContainer = By.cssSelector("[data-test='cart-contents-container']");
     public CartPage(WebDriver driver){
@@ -29,6 +30,9 @@ public class CartPage extends BasePage {
         return driver.findElements(productInCartName).size();
 //         List<WebElement> products= driver.findElements(productInCartName);
 //         return products.size();
+    }
+    public void clickCheckoutBtn(){
+        click(checkoutBtn);
     }
 
 }
