@@ -16,7 +16,12 @@ public class BaseTest {
 
     @BeforeMethod
     public void setUp() {
-        WebDriverManager.chromedriver().setup();
+        String chromedriverBin = System.getenv("CHROMEDRIVER_BIN");
+        if (chromedriverBin != null && !chromedriverBin.isEmpty()) {
+            System.setProperty("webdriver.chrome.driver", chromedriverBin);
+        } else {
+            WebDriverManager.chromedriver().setup();
+        }
 
         ChromeOptions options = new ChromeOptions();
         // Headless is required for CI (GitHub Actions / Jenkins have no display).
