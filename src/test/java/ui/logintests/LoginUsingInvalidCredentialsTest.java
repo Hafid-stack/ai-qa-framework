@@ -16,7 +16,7 @@ public class LoginUsingInvalidCredentialsTest extends BaseTest {
 
         LoginPage loginPage= loginFlow.loginWithInvalidUser(ConfigReader.get("invalid.username"), ConfigReader.get("invalid.password"));
         System.out.println(loginPage.getErrorMessage());
-        Assert.assertTrue(loginPage.getErrorMessage().contains(ConfigReader.get("error.message.one")),"Invalid username or password");
+        Assert.assertTrue(loginPage.getErrorMessage().contains(ConfigReader.get("error.message.invalid")),"Invalid username or password");
 
     }
 }

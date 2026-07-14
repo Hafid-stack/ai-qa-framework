@@ -17,6 +17,6 @@ public class LoginUsingLockedUserTest extends BaseTest {
 
         LoginPage loginPage= loginFlow.loginWithLockedUser(ConfigReader.get("locked.username"),ConfigReader.get("valid.password"));
 
-        Assert.assertTrue(loginPage.getErrorMessage().contains(ConfigReader.get("error.message.two")));
+        Assert.assertTrue(loginPage.getErrorMessage().contains(ConfigReader.get("error.message.locked")));
     }
 }

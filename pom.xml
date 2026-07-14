@@ -17,6 +17,7 @@
         <selenium.version>4.21.0</selenium.version>
         <testng.version>7.10.2</testng.version>
         <webdrivermanager.version>5.9.1</webdrivermanager.version>
+        <restassured.version>5.4.0</restassured.version>
     </properties>
 
     <dependencies>
@@ -25,6 +26,13 @@
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
             <version>${selenium.version}</version>
+        </dependency>
+        <!-- RestAssured: API testing -->
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>${restassured.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>net.datafaker</groupId>
