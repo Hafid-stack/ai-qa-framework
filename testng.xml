@@ -3,7 +3,20 @@
 <suite name="AI-QA-Framework Suite">
     <test name="UI Tests">
         <classes>
-            <class name="ui.LoginTest"/>
+            <class name="ui.logintests.noflow.LoginTest"/>
+            <class name="ui.logintests.noflow.InvalidLoginTest"/>
+            <class name="ui.logintests.LoginUsingValidCredentialsTest"/>
+            <class name="ui.logintests.LoginUsingInvalidCredentialsTest"/>
+            <class name="ui.logintests.LoginUsingLockedUserTest"/>
+            <class name="ui.logouttests.LogoutCorrectlyTest"/>
+            <class name="ui.shoppingtests.AddingItemsToCartTest"/>
+            <class name="ui.e2e.CompleteCheckOutE2ETest"/>
+        </classes>
+    </test>
+    <test name="API Tests">
+        <classes>
+            <class name="api.PingTest"/>
+            <class name="api.BookingTest"/>
         </classes>
     </test>
 </suite>
