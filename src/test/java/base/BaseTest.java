@@ -18,7 +18,7 @@ public class BaseTest {
 
     @BeforeMethod
     public void setUp() {
-        String browser = System.getenv("BROWSER") != null ? System.getenv("BROWSER") : "chrome";
+        String browser = System.getenv("BROWSER") != null ? System.getenv("BROWSER") : "firefox";
         boolean runHeadless = !"false".equalsIgnoreCase(System.getenv("HEADLESS"));
 
         if (browser.equalsIgnoreCase("firefox")) {
