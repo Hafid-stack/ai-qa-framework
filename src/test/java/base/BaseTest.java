@@ -18,7 +18,7 @@ public class BaseTest {
 
     @BeforeMethod
     public void setUp() {
-        String browser = System.getenv("BROWSER") != null ? System.getenv("BROWSER") : "firefox";
+        String browser = System.getenv("BROWSER") != null ? System.getenv("BROWSER") : "chrome";
         boolean runHeadless = !"false".equalsIgnoreCase(System.getenv("HEADLESS"));
 
         if (browser.equalsIgnoreCase("firefox")) {
@@ -48,9 +48,11 @@ public class BaseTest {
             options.addArguments("--disable-dev-shm-usage");
         }
         //Maybe it is better to just maximize in the future
+        options.addArguments("--guest");
         options.addArguments("--window-size=1920,1080");
         options.addArguments("--disable-features=PasswordLeakDetection");
         options.setExperimentalOption("prefs", Map.of(
+                "profile.password.manager.leak.detection", false,
                 "credentials_enable_service", false,
                 "profile.password_manager_enabled", false
         ));
