@@ -23,7 +23,7 @@ public class AddToCartFlow extends BaseFlow {
 
     public CartPage addToCart(){
         inventoryPage.addRandomProductToCart();
-        inventoryPage.addRandomProductToCart();
+
         inventoryPage.clickCartButton();
         return cartPage;
     }
@@ -35,5 +35,14 @@ public class AddToCartFlow extends BaseFlow {
 
         return checkoutCompletePage;
 
+    }
+    public CheckoutStepTwoPage fillCustomerDetailAndContinueToCheckout(CustomerDetail customerDetail){
+        inventoryPage.addRandomProductToCart();
+        inventoryPage.clickCartButton();
+        cartPage.clickCheckoutBtn();
+        //here
+        checkoutStepOnePage.addCustomerDetails(customerDetail);
+        checkoutStepOnePage.clickContinue();
+        return checkoutStepTwoPage;
     }
 }

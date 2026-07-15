@@ -13,7 +13,9 @@ public class CheckoutStepTwoPage extends BasePage {
         super(driver);
     }
 
-
+    public int getProductsInOverViewCount(){
+        return countElements(inventoryItemLocator);
+    }
     public boolean isCheckoutStepTwoPageDisplayed(){
         return isDisplayed(checkoutStepTwoContainer);
     }

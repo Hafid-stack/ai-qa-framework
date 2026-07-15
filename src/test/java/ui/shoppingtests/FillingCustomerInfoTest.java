@@ -1,4 +1,4 @@
-package ui.e2e;
+package ui.shoppingtests;
 
 import base.BaseTest;
 import flows.AddToCartFlow;
@@ -6,27 +6,26 @@ import flows.LoginFlow;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.CartPage;
-import pages.CheckoutCompletePage;
 import pages.CheckoutStepTwoPage;
 import pages.InventoryPage;
 import utils.ConfigReader;
 import utils.Generator;
 
-public class CompleteCheckOutE2ETest extends BaseTest {
+public class FillingCustomerInfoTest extends BaseTest {
+
     @Test
-    public void getThankYouMessage(){
+    public void fillingCustomerInfoTest() {
+
 
         LoginFlow loginFlow = new LoginFlow(driver);
         AddToCartFlow addToCartFlow = new AddToCartFlow(driver);
         InventoryPage inventoryPage = loginFlow.loginAsValidUser(ConfigReader.get("valid.username"), ConfigReader.get("valid.password"));
-        CartPage cartPage = addToCartFlow.addToCart();
+        // Thread.sleep(3000);
         Generator generator = new Generator();
+        CheckoutStepTwoPage checkoutStepTwoPage = addToCartFlow.fillCustomerDetailAndContinueToCheckout(generator.getRandomCustomerDetail());
+        //Thread.sleep(3000);
 
-
-        CheckoutCompletePage checkoutCompletePage=addToCartFlow.fillCustomerDetailAndContinue(generator.getRandomCustomerDetail());
-
-
-        Assert.assertEquals(ConfigReader.get("thank.you.message"),checkoutCompletePage.getThankYouMessage(),"checkout imcomplete");
-
+        Assert.assertTrue(checkoutStepTwoPage.isCheckoutStepTwoPageDisplayed(), "Checkout Step Two Page is not Displayed");
+        Assert.assertTrue(checkoutStepTwoPage.getProductsInOverViewCount()>0,"Products in Over View Count is 0");
     }
 }

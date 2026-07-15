@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <suite name="AI-QA-Framework Suite">
+    <listeners>
+        <listener class-name="utils.ExtentTestListener"/>
+    </listeners>
     <test name="UI Tests">
         <classes>
             <class name="ui.logintests.noflow.LoginTest"/>
@@ -10,6 +13,7 @@
             <class name="ui.logintests.LoginUsingLockedUserTest"/>
             <class name="ui.logouttests.LogoutCorrectlyTest"/>
             <class name="ui.shoppingtests.AddingItemsToCartTest"/>
+            <class name="ui.shoppingtests.FillingCustomerInfoTest"/>
             <class name="ui.e2e.CompleteCheckOutE2ETest"/>
         </classes>
     </test>
