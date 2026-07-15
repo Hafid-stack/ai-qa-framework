@@ -1,6 +1,12 @@
 package parser;
 
 public class ExtractedElement {
+//    data-test attribute
+//    id
+//            name
+//    aria-label / visible text
+//    CSS path
+//    XPath (last resort)
 
     private String tagName;
     private String type;       // e.g. "text", "password", "submit" (for inputs), or "link", "button"
