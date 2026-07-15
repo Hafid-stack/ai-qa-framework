@@ -40,7 +40,7 @@ public class AddToCartFlow extends BaseFlow {
         inventoryPage.addRandomProductToCart();
         inventoryPage.clickCartButton();
         cartPage.clickCheckoutBtn();
-        //here
+
         checkoutStepOnePage.addCustomerDetails(customerDetail);
         checkoutStepOnePage.clickContinue();
         return checkoutStepTwoPage;
