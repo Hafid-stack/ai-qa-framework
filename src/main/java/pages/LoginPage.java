@@ -6,7 +6,7 @@ import org.openqa.selenium.WebDriver;
 import utils.ConfigReader;
 
 public class LoginPage extends BasePage {
-
+//private final By inTyText=By.cssSelector("[data-test='username']");
     private final By usernameInput = By.cssSelector("[data-test='username']");
     private final By passwordInput = By.cssSelector("[data-test='password']");
     private final By loginButton = By.cssSelector("[data-test='login-button']");

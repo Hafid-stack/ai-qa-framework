@@ -3,16 +3,23 @@ package cli;
 import fetch.PageFetcher;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import parser.ExtractedElement;
 import parser.HtmlParser;
-import parser.InputOrder;
+import parser.SelectorPriorityFinder;
+import parser.WebElementSelector;
 import utils.ConfigReader;
+import utils.Generator;
 
 import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        WebDriver driver = new ChromeDriver();
+        Generator generator = new Generator();
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.addArguments("--headless=new");
+        WebDriver driver = new ChromeDriver(chromeOptions);
+
 
         PageFetcher pageFetcher = new PageFetcher(driver);
         //we get the raw html
@@ -26,10 +33,10 @@ public class Main {
 
 
         }
-        InputOrder inputOrder = new InputOrder();
-        List<String> cssSelectors=inputOrder.getOrder(elements);
-        for (String cssSelector : cssSelectors) {
-            System.out.println(cssSelector);
+        SelectorPriorityFinder inputOrder = new SelectorPriorityFinder();
+        List<WebElementSelector> cssSelectors=inputOrder.getOrder(elements);
+        for (WebElementSelector cssSelector : cssSelectors) {
+            System.out.println(generator.buildJavaFieldDeclaration(cssSelector));
         }
 
 
