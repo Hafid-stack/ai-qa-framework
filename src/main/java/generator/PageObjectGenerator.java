@@ -68,9 +68,12 @@ public class PageObjectGenerator {
                 methods.append("    public void click").append(methodSuffix).append("() {\n");
                 methods.append("        click(").append(fieldName).append(");\n");
                 methods.append("    }\n\n");
-                methods.append("    public String getText").append(methodSuffix).append("() {\n");
-                methods.append("        return getText(").append(fieldName).append(");\n");
-                methods.append("    }\n\n");
+
+                if (selector.hasVisibleText()) {
+                    methods.append("    public String getText").append(methodSuffix).append("() {\n");
+                    methods.append("        return getText(").append(fieldName).append(");\n");
+                    methods.append("    }\n\n");
+                }
                 break;
 
             default:

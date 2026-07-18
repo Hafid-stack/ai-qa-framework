@@ -37,22 +37,30 @@ public class SelectorPriorityFinder {
 
     private WebElementSelector tryDataTest(ExtractedElement element) {
         if (element.getDataTest() == null || element.getDataTest().isEmpty()) return null;
-        return new WebElementSelector(buildVariableName(element), "[data-test='" + element.getDataTest() + "']", "css", element.getTagName());
+        return new WebElementSelector(buildVariableName(element), "[data-test='" + element.getDataTest() + "']",
+                "css", element.getTagName(), elementHasText(element));
     }
 
     private WebElementSelector tryId(ExtractedElement element) {
         if (element.getId() == null || element.getId().isEmpty()) return null;
-        return new WebElementSelector(buildVariableName(element), "#" + element.getId(), "css", element.getTagName());
+        return new WebElementSelector(buildVariableName(element), "#" + element.getId(),
+                "css", element.getTagName(), elementHasText(element));
     }
 
     private WebElementSelector tryName(ExtractedElement element) {
         if (element.getName() == null || element.getName().isEmpty()) return null;
-        return new WebElementSelector(buildVariableName(element), "[name='" + element.getName() + "']", "css", element.getTagName());
+        return new WebElementSelector(buildVariableName(element), "[name='" + element.getName() + "']",
+                "css", element.getTagName(), elementHasText(element));
     }
 
     private WebElementSelector tryLinkText(ExtractedElement element) {
         if (element.getText() == null || element.getText().isEmpty()) return null;
-        return new WebElementSelector(buildVariableName(element), element.getText(), "linkText", element.getTagName());
+        return new WebElementSelector(buildVariableName(element), element.getText(),
+                "linkText", element.getTagName(), elementHasText(element));
+    }
+
+    private boolean elementHasText(ExtractedElement element) {
+        return element.getText() != null && !element.getText().isEmpty();
     }
 
     private String buildVariableName(ExtractedElement element) {

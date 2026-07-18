@@ -107,16 +107,8 @@ public class InventoryPageAI extends BasePage {
         click(byShoppingCartLink);
     }
 
-    public String getTextShoppingCartLink() {
-        return getText(byShoppingCartLink);
-    }
-
     public void clickItem4ImgLink() {
         click(byItem4ImgLink);
-    }
-
-    public String getTextItem4ImgLink() {
-        return getText(byItem4ImgLink);
     }
 
     public void clickItem4TitleLink() {
@@ -131,10 +123,6 @@ public class InventoryPageAI extends BasePage {
         click(byItem0ImgLink);
     }
 
-    public String getTextItem0ImgLink() {
-        return getText(byItem0ImgLink);
-    }
-
     public void clickItem0TitleLink() {
         click(byItem0TitleLink);
     }
@@ -145,10 +133,6 @@ public class InventoryPageAI extends BasePage {
 
     public void clickItem1ImgLink() {
         click(byItem1ImgLink);
-    }
-
-    public String getTextItem1ImgLink() {
-        return getText(byItem1ImgLink);
     }
 
     public void clickItem1TitleLink() {
@@ -163,10 +147,6 @@ public class InventoryPageAI extends BasePage {
         click(byItem5ImgLink);
     }
 
-    public String getTextItem5ImgLink() {
-        return getText(byItem5ImgLink);
-    }
-
     public void clickItem5TitleLink() {
         click(byItem5TitleLink);
     }
@@ -179,10 +159,6 @@ public class InventoryPageAI extends BasePage {
         click(byItem2ImgLink);
     }
 
-    public String getTextItem2ImgLink() {
-        return getText(byItem2ImgLink);
-    }
-
     public void clickItem2TitleLink() {
         click(byItem2TitleLink);
     }
@@ -193,10 +169,6 @@ public class InventoryPageAI extends BasePage {
 
     public void clickItem3ImgLink() {
         click(byItem3ImgLink);
-    }
-
-    public String getTextItem3ImgLink() {
-        return getText(byItem3ImgLink);
     }
 
     public void clickItem3TitleLink() {
