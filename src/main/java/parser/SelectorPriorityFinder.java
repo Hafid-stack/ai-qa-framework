@@ -6,7 +6,6 @@ import java.util.function.Function;
 
 public class SelectorPriorityFinder {
 
-    // Each strategy: given an element, try to build a selector. Return null if this attribute isn't usable.
     private final List<Function<ExtractedElement, WebElementSelector>> strategies = List.of(
             this::tryDataTest,
             this::tryId,
@@ -30,35 +29,33 @@ public class SelectorPriorityFinder {
         for (Function<ExtractedElement, WebElementSelector> strategy : strategies) {
             WebElementSelector result = strategy.apply(element);
             if (result != null) {
-                return result; // first match wins — this IS the priority order
+                return result;
             }
         }
-        return null; // no usable attribute found at all
+        return null;
     }
 
     private WebElementSelector tryDataTest(ExtractedElement element) {
         if (element.getDataTest() == null || element.getDataTest().isEmpty()) return null;
-        return new WebElementSelector(buildVariableName(element), "[data-test='" + element.getDataTest() + "']", "css");
+        return new WebElementSelector(buildVariableName(element), "[data-test='" + element.getDataTest() + "']", "css", element.getTagName());
     }
 
     private WebElementSelector tryId(ExtractedElement element) {
         if (element.getId() == null || element.getId().isEmpty()) return null;
-        return new WebElementSelector(buildVariableName(element), "#" + element.getId(), "css");
+        return new WebElementSelector(buildVariableName(element), "#" + element.getId(), "css", element.getTagName());
     }
 
     private WebElementSelector tryName(ExtractedElement element) {
         if (element.getName() == null || element.getName().isEmpty()) return null;
-        return new WebElementSelector(buildVariableName(element), "[name='" + element.getName() + "']", "css");
+        return new WebElementSelector(buildVariableName(element), "[name='" + element.getName() + "']", "css", element.getTagName());
     }
 
     private WebElementSelector tryLinkText(ExtractedElement element) {
         if (element.getText() == null || element.getText().isEmpty()) return null;
-        return new WebElementSelector(buildVariableName(element), element.getText(), "linkText");
+        return new WebElementSelector(buildVariableName(element), element.getText(), "linkText", element.getTagName());
     }
 
     private String buildVariableName(ExtractedElement element) {
-        // Prefer the specific identifier over the generic type, to avoid name collisions
-        // (e.g. two type="text" inputs would otherwise both generate the same variable name)
         String source;
         if (element.getDataTest() != null && !element.getDataTest().isEmpty()) {
             source = element.getDataTest();
@@ -71,7 +68,20 @@ public class SelectorPriorityFinder {
         } else {
             source = "element";
         }
+        return toValidJavaIdentifier(source);
+    }
 
-        return source.substring(0, 1).toUpperCase() + source.substring(1);
+    private String toValidJavaIdentifier(String raw) {
+        String[] parts = raw.split("[^a-zA-Z0-9]+");
+        StringBuilder result = new StringBuilder();
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                result.append(Character.toUpperCase(part.charAt(0)));
+                if (part.length() > 1) {
+                    result.append(part.substring(1));
+                }
+            }
+        }
+        return result.length() > 0 ? result.toString() : "Element";
     }
 }
