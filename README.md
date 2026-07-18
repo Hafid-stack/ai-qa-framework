@@ -46,3 +46,43 @@ Keeping track of key decisions and why, so Sprint 7 (final README + report) is f
 ## Known cleanup items (not urgent)
 - `CheckoutStepOnePage` had a naming collision (`isDisplayed()` overloading `BasePage`'s method) — renamed, confirmed 0 usages elsewhere via IntelliJ.
 - `utils.App` — scratch file used to sanity-check `Generator`/`CustomerDetail`, should be removed before final polish.
+
+---
+
+## AI Layer — Stage 1 complete, real bugs found and fixed
+
+Tested selector-priority logic against two real, messy pages (SauceDemo checkout-step-one and inventory), not just the simple login page. Found and fixed two genuine, evidence-based bugs along the way — good material for the report/defense, since each was found by testing against real data, not theorized in advance:
+
+**Bug 1 — naming collision from using element `type` instead of a specific identifier.** Original `buildVariableName` only looked at `element.getType()`, so multiple `type="text"` inputs (firstName, lastName, postalCode on checkout) would all generate the same Java variable name — a real compile-breaking collision, not just a style issue. Fixed by preferring `data-test` > `id` > `name` > `type` (in that priority order) when building the variable name, not just the selector.
+
+**Bug 2 — invalid Java identifiers from real-world messy `data-test` values.** SauceDemo has a product literally named `test.allTheThings() T-Shirt (Red)`, producing a `data-test` value with periods and parentheses. Initial fix only stripped hyphens/underscores/whitespace; broadened the regex to `[^a-zA-Z0-9]+` (split on any non-alphanumeric run) to handle arbitrary punctuation safely. This is a good real-world example for the report: production HTML is messier than clean tutorial examples, and the pipeline needed to handle that.
+
+**Design decision — priority-list pattern over nested if/else.** `SelectorPriorityFinder` uses a `List<Function<ExtractedElement, WebElementSelector>>` of small strategy methods (`tryDataTest`, `tryId`, `tryName`, `tryLinkText`), tried in order, first match wins. Chosen over a hand-written if/else-if chain specifically because priority order becomes "position in a list" rather than nested logic — adding a new priority level later means one new method + one line, not restructuring a conditional chain. (Started as a nested if/else-if from an earlier draft; refactored once the pattern's real benefit — extensibility — became clear.)
+
+**Design decision — deferred, not built: repeated-component / duplicate detection.** SauceDemo's own `data-test` values happen to bake in uniqueness per product (`add-to-cart-sauce-labs-backpack` vs `-bike-light`), so this specific site never actually triggered the "same selector pattern repeated across a tile" problem the design doc flagged as the hardest part. Deliberately chose not to build full parent-container-scoped duplicate detection given timeline — documented as a known limitation / future work, not silently skipped. If it comes up in defense: real production sites without per-item unique attributes would need this; SauceDemo's test-friendly design happened to sidestep it.
+
+## AI Layer — Stage 2: Page Object generation, working end to end
+
+`generator.PageObjectGenerator` takes the `List<WebElementSelector>` from Stage 1 and generates a complete, real, compilable Java Page Object class, written to disk.
+
+**Key design decisions:**
+- Generated classes extend the **existing** `BasePage` (not a separate one) — reuses `click()`, `type()`, `getText()`, `isDisplayed()` already built and proven throughout the framework. Keeps generated and hand-written pages structurally consistent, avoids maintaining two parallel hierarchies.
+- Generated classes live in a dedicated package, `pages/generated/`, with an `...AI` suffix (e.g. `InventoryPageAI`) — physically separate from hand-written pages so generated/draft code is never confused with production-reviewed code.
+- Method generation is type-aware: `input` → `type...(String)`, `button` → `click...()`, `a` (link) → `click...()` plus conditionally `getText...()`. Mirrors the same method-naming conventions already used in hand-written pages throughout the project — generated code looks like the project's own style, not foreign boilerplate.
+- `WebElementSelector` carries an `elementCategory` (input/button/a) and a `hasVisibleText` flag, both computed during Stage 1 extraction, so Stage 2's generation logic doesn't need to re-inspect raw HTML — clean separation between "figure out what this element is" (Stage 1) and "decide what code to generate for it" (Stage 2).
+
+**Real bug found and fixed (good debugging story for the report):** generated file showed every `getText...()` method duplicated verbatim, back to back. Root cause hunt: ruled out `HtmlParser` producing duplicate elements (verified with explicit count logging — 28 elements in, 28 out, no duplication) and ruled out `writeToFile` appending instead of overwriting (confirmed `Files.writeString` defaults to `CREATE`+`TRUNCATE_EXISTING`). Actual cause: in `PageObjectGenerator.buildMethods()`, the `"a"` case had two separate `getText(...)` code blocks back to back — one unconditional (leftover from before the `hasVisibleText` feature was added), one correctly gated behind `if (selector.hasVisibleText())`. The unconditional block was dead code left over from an incomplete edit, not a logic error in the loop or extraction — a good example of why "add a targeted print statement and verify with real numbers at each stage" beats guessing when a bug's symptoms (duplicate output) suggest a very different cause (duplicate data) than the real one (duplicate code path).
+
+**Deterministic vs. AI — where the line was actually drawn.** Considered using AI even for "is this an image-only link" type decisions; concluded that's a clean, binary, rule-based check (`text` field empty + tag is `<a>` → skip `getText()`) that doesn't need AI at all — cheaper, more predictable, more defensible than an API call for something a one-line condition solves. Reserving AI specifically for genuine judgment calls without a clean rule (e.g., "should an icon-only button with no visible text still get a `getText()` method, given some future use might read an aria-label instead"). This distinction — knowing which sub-problems need AI vs. which are better solved deterministically — is itself a deliberate design point worth stating explicitly in the report, not just implementation detail.
+
+**Where things stand on the design doc's build order:**
+- ✅ Selenium → retrieve rendered HTML
+- ✅ Parse with jsoup, categorize by type
+- ✅ Selector-generation + uniqueness logic (priority-based, Java-identifier-safe)
+- ✅ Page Object generation from structured data → real compilable `.java` files on disk
+- ⏳ Repeated-component detection — deferred, documented as future work (see above)
+- ⏳ AI call for genuine judgment-call refinement (single agent, narrow scope — planned next)
+- ⏳ Pipeline B (naive raw-HTML-to-AI baseline) for comparison
+- ⏳ Run both, collect metrics, visualize for report
+
+**Next planned step:** wire in one focused AI agent call — reviewing generated methods/names for genuine judgment calls the deterministic rules can't confidently resolve — before attempting any multi-agent split (considered, deliberately deferred as a possible stretch-goal comparison: does splitting the refinement task across multiple narrow agents improve consistency over one agent handling it all? Not yet built.).
