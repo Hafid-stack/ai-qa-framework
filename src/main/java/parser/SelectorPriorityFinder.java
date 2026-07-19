@@ -38,25 +38,25 @@ public class SelectorPriorityFinder {
     private WebElementSelector tryDataTest(ExtractedElement element) {
         if (element.getDataTest() == null || element.getDataTest().isEmpty()) return null;
         return new WebElementSelector(buildVariableName(element), "[data-test='" + element.getDataTest() + "']",
-                "css", element.getTagName(), elementHasText(element));
+                "css", element.getTagName(), elementHasText(element), "dataTest");
     }
 
     private WebElementSelector tryId(ExtractedElement element) {
         if (element.getId() == null || element.getId().isEmpty()) return null;
         return new WebElementSelector(buildVariableName(element), "#" + element.getId(),
-                "css", element.getTagName(), elementHasText(element));
+                "css", element.getTagName(), elementHasText(element), "id");
     }
 
     private WebElementSelector tryName(ExtractedElement element) {
         if (element.getName() == null || element.getName().isEmpty()) return null;
         return new WebElementSelector(buildVariableName(element), "[name='" + element.getName() + "']",
-                "css", element.getTagName(), elementHasText(element));
+                "css", element.getTagName(), elementHasText(element), "name");
     }
 
     private WebElementSelector tryLinkText(ExtractedElement element) {
         if (element.getText() == null || element.getText().isEmpty()) return null;
         return new WebElementSelector(buildVariableName(element), element.getText(),
-                "linkText", element.getTagName(), elementHasText(element));
+                "linkText", element.getTagName(), elementHasText(element), "text");
     }
 
     private boolean elementHasText(ExtractedElement element) {
@@ -71,6 +71,8 @@ public class SelectorPriorityFinder {
             source = element.getId();
         } else if (element.getName() != null && !element.getName().isEmpty()) {
             source = element.getName();
+        } else if (element.getText() != null && !element.getText().isEmpty()) {
+            source = element.getText();
         } else if (element.getType() != null && !element.getType().isEmpty()) {
             source = element.getType();
         } else {

@@ -24,16 +24,16 @@ public class Main3 {
         WebDriver driver = new ChromeDriver(chromeOptions);
 
         // Log in first, since checkout requires authentication
-        driver.get(ConfigReader.get("loginUrl"));
-        driver.findElement(By.cssSelector("[data-test='username']")).sendKeys(ConfigReader.get("valid.username"));
-        driver.findElement(By.cssSelector("[data-test='password']")).sendKeys(ConfigReader.get("valid.password"));
-        driver.findElement(By.cssSelector("[data-test='login-button']")).click();
+        //driver.get("https://automationexercise.com/login");
+        //driver.findElement(By.cssSelector("[data-test='username']")).sendKeys(ConfigReader.get("valid.username"));
+        //driver.findElement(By.cssSelector("[data-test='password']")).sendKeys(ConfigReader.get("valid.password"));
+        //driver.findElement(By.cssSelector("[data-test='login-button']")).click();
 
         // Add an item to cart, then go to checkout step one — this page has firstName/lastName/postalCode, all type=text
         //driver.get("https://www.saucedemo.com/checkout-step-one.html");
 
         PageFetcher pageFetcher = new PageFetcher(driver);
-        String html = pageFetcher.getHtml("https://www.saucedemo.com/inventory.html");
+        String html = pageFetcher.getHtml("https://automationexercise.com/login");
 
         HtmlParser parser = new HtmlParser();
         List<ExtractedElement> elements = parser.extractInteractiveElements(html);
@@ -54,6 +54,12 @@ public class Main3 {
             throw new RuntimeException(e);
         }
         System.out.println("Generated: src/main/java/pages/generated/InventoryPageAI.java");
+        List<WebElementSelector> lowConfidenceSelectors = cssSelectors.stream()
+                .filter(WebElementSelector::isLowConfidence)
+                .toList();
+
+        System.out.println("Total selectors: " + cssSelectors.size());
+        System.out.println("Low-confidence (need AI review): " + lowConfidenceSelectors.size());
         driver.quit();
     }
 }
