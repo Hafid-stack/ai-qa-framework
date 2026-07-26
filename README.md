@@ -102,3 +102,40 @@ Before wiring the AI layer, tested the deterministic pipeline against a second, 
 **Why this sequence matters for the report:** each fix was driven by running the real pipeline against real HTML and observing an actual failure/limitation, not guessed in advance — data-test-only assumption, missing text fallback, and hidden-field noise were all invisible until tested against a second site with different conventions. This is a legitimate before/after comparison: SauceDemo (clean, `data-test` everywhere) needed zero fixes; automationexercise.com (real, inconsistent conventions) needed three scoped, evidence-based fixes — a good demonstration that the pipeline's design (deterministic-first, config-driven attribute list, explicit noise filtering) generalizes reasonably well across differently-structured real sites, not just the one it was originally built against.
 
 **Known, accepted limitation restated with fresh evidence:** true structural duplicates (same selector legitimately appearing more than once, like the CSRF tokens before filtering, or a hypothetical repeated "Add to Cart" button without a unique per-item attribute) still are not automatically scoped to a parent container — this remains deliberately deferred, documented future work, now demonstrated with a second real example beyond the original inventory-page case.
+
+---
+
+## AI Judgment-Call Layer — working, tested across two backends
+
+Built `SelectorReviewClient` + `SelectorReviewPromptBuilder` + `SelectorReviewResult`: reviews only the *low-confidence* selectors (those that fell back to matching on visible text, tracked via a new `matchedVia` field on `WebElementSelector` and `isLowConfidence()`), one element at a time — not the whole page — asking a narrow, focused question and requiring structured JSON back.
+
+**Backend 1 — Gemini 3.5 Flash (cloud, free tier initially, later upgraded to paid ~$10 billing).** Free tier (5 req/min) caused real, live rate-limit failures during testing — handled gracefully by existing try/catch, falling back to deterministic output rather than crashing (genuine evidence of resilient design, not a hypothetical). Upgraded to paid tier specifically to remove this friction; confirmed working with zero rate-limit errors afterward. Also hit occasional plain network timeouts (unrelated to billing) — fixed by adding explicit, more generous OkHttp timeouts (15s connect / 30s read) to `GeminiClient`.
+
+**Backend 2 — Llama 3.1 8B via Ollama (local, free, no API key, no rate limit).** Required switching the local model's prompt to use `format: "json"` (Ollama-specific field that enforces structured JSON output) — worked reliably, no markdown-fence issues.
+
+**Real quality comparison between the two backends, same 8 elements, same prompt:** Gemini caught a specific, concrete defect — a stray Unicode icon character corrupting the "Products" nav link's `linkText` selector — and correctly flagged it as low-confidence/possibly-drop. Llama 3.1 8B gave plausible-sounding, mostly correct, but noticeably more generic feedback ("might not be unique," repeated near-identical phrasing across different elements) and did not catch the icon-character issue specifically. Both models reliably returned well-formed, parseable JSON. **Honest finding: cloud model showed better judgment-call specificity than the local 8B model on this task, though both are directionally correct and neither crashed the pipeline.**
+
+**Also observed: Gemini's own verdict on the same "Products" element was inconsistent across separate runs** (once said `keepElement: false`, another run said `true`, despite both times correctly identifying the underlying Unicode character problem) — a legitimate, reportable finding about LLM judgment-call consistency, not a bug in the pipeline itself.
+
+**Practical fix needed and applied:** IntelliJ stores environment variables (like `GEMINI_API_KEY`) per run configuration, not globally — every new `MainX` scratch class needed the key re-added manually. Fixed properly by adding `GEMINI_API_KEY` to IntelliJ's **Run → Edit Configurations → Templates → Application** section, so it's inherited automatically by every future run configuration. Worth mentioning as a real, practical development friction and its proper fix, not just a code detail.
+
+---
+
+## Pipeline B — naive baseline, built and tested
+
+Built `NaivePageObjectGenerator` (`ai` package) + `Main7`: sends the **entire raw HTML** of a page directly to Gemini in one shot, asks for a complete Java Page Object class in return, no structured extraction, no priority logic, no jsoup — the "paste into ChatGPT" baseline the project's original design doc set out to compare against. Prompt gave reasonable, fair guidance (prefer data-test/data-qa/id/name over text, skip hidden inputs) rather than being deliberately unhelpful — an honest, fair baseline, not a strawman.
+
+**Results — genuinely mixed, and worth reporting honestly rather than only favorably:**
+
+*SauceDemo:* naive output correctly used `data-test` selectors for real interactive elements, but also **hallucinated two methods** (`getCredentialsText()`, `getPasswordText()`) for what are actually static page-instruction text blocks, not real interactive elements — content the structured Pipeline A never would have extracted in the first place, since it only looks at `<input>`/`<button>`/`<a>` tags. A concrete example of the naive approach inventing plausible-but-wrong purpose for non-interactive content.
+
+*automationexercise.com:* naive output was surprisingly strong — correctly identified and used `data-qa` (the site's actual convention) without being told which specific site uses it, and used `href`-based CSS selectors for navigation links (e.g. `a[href='/products']`) instead of falling back to fragile `linkText` matching — arguably **more robust than Pipeline A's own text-based fallback** for the same elements. Correctly appears to have skipped hidden CSRF fields too.
+
+**Honest overall conclusion for the report:** Pipeline B (naive) is not uniformly worse — on a messier, real-world site it produced comparably good or arguably better selectors in some cases (href > linkText). Pipeline A's real, defensible advantages are not "always better output" but: (1) determinism and traceability — every selector's confidence/origin is explicitly tracked, not a black-box guess; (2) explicit, visible low-confidence flagging for human review, vs. Pipeline B's silent one-shot answer with no confidence signal at all; (3) proven, debugged handling of edge cases (hidden fields, Java-identifier-safety, naming collisions) developed through iterative testing against real sites — Pipeline B's quality on any *new*, untested site is unverified and could vary run to run, given the earlier-observed inconsistency in Gemini's own judgment calls.
+
+## Remaining work (as of this session)
+- Small metrics table summarizing the above comparison (selector accuracy / low-confidence rate / notable hits-and-misses per pipeline) for the report
+- Fix `LoginPageNaiveB.java` / `LoginPageNaiveB2.java` package declarations (should both be `package pages.naive;`, currently missing/wrong)
+- Decide whether to wire AI suggestions back into `PageObjectGenerator` automatically, or explicitly document current design as human-in-the-loop (AI flags, developer decides) — either is a legitimate, defensible choice
+- Final README + report writeup (PROJECT_NOTES.md already contains most of the raw material/reasoning needed)
+- Minor cleanup: remove `utils.App` scratch file; consolidate/tidy `MainX` scratch classes (Main, Main3, Main4, Main5, Main6, Main7, OlamaTest) into fewer, clearly-named, documented entry points before final submission
