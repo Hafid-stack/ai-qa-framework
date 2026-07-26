@@ -9,13 +9,14 @@ import java.io.IOException;
 import java.util.List;
 
 public class SelectorReviewClient {
-
-    private final AIClient aiClient;
+    //Use this one for Ollama Localy 8B parameter
+    //private final AIClient aiClient;
+    private final GeminiClient aiClient;
     private final SelectorReviewPromptBuilder promptBuilder;
     private final Gson gson = new Gson();
 
     public SelectorReviewClient() {
-        this.aiClient = new AIClient();
+        this.aiClient = new GeminiClient();
         this.promptBuilder = new SelectorReviewPromptBuilder();
     }
 
