@@ -1,141 +1,150 @@
-# Project Notes (rough, working doc — not the final README)
+# AI-Assisted QA Framework with CI/CD Pipeline
 
-Keeping track of key decisions and why, so Sprint 7 (final README + report) is fast to write later.
+A Java/Selenium test automation framework combined with an AI-assisted pipeline that generates Page Object classes automatically from a webpage's HTML — a master's PFE project.
 
----
+## Problem statement
 
-## Sprint 1 — Core Framework
-- Site: switched from automationexercise.com (original plan) to **SauceDemo** — cleaner HTML, no ads, industry-standard practice site, stable `data-test` attributes on every element (huge win for reliable locators).
-- Structure: BasePage → Pages → Flows → Tests. Flows chain multiple pages into real user journeys (login → cart → checkout).
-- Kept both raw ("noflow") tests and flow-based tests deliberately — shows progression from basic to abstracted, good story for defense.
-- Added 2 API tests using **Restful-Booker** (industry-standard practice API) — ping health check + full create/retrieve booking test. SauceDemo has no public API, so this is a separate, deliberate addition.
-- Config values (URLs, credentials, error messages) centralized in `config.properties` + `ConfigReader` utility — no hardcoded values in tests.
+Writing automated UI test code — locators, page objects, and test methods — is repetitive and time-consuming. This project builds a modular, AI-assisted pipeline that generates these artifacts from a webpage's HTML, letting a QA engineer choose how much of the boilerplate to automate, wrapped in a CI/CD pipeline for continuous execution. It also compares this structured approach against the naive alternative — pasting raw HTML directly into an AI — to measure whether structuring the input actually produces better, more reliable results.
 
-## Sprint 2 — GitHub Actions CI/CD
-- `.github/workflows/ci.yml` — runs `mvn clean test` on every push to main.
-- Headless Chrome required in CI (no display on GitHub's runners) — this is why `BaseTest` has environment-driven browser config from the start.
+## Tech stack
 
-## Sprint 3 — Jenkins (local, Docker)
-- Jenkins running locally via Docker, JDK 17, webhook from GitHub triggers builds automatically.
-- Jenkinsfile: 3 stages (Checkout, Build, Test), plus JUnit result publishing + artifact archiving.
-- Jenkins Docker container uses **Chromium**, not Chrome — env vars `CHROME_BIN` / `CHROMEDRIVER_BIN` in Jenkinsfile point `BaseTest` at the right binaries. `BaseTest` falls back to WebDriverManager auto-detection when these aren't set (i.e., locally, in GitHub Actions).
+- **Language:** Java 17, Maven
+- **Test framework:** Selenium WebDriver, TestNG, RestAssured (API testing)
+- **CI/CD:** GitHub Actions (cloud) + Jenkins (local, Docker)
+- **Reporting:** ExtentReports with screenshots on failure
+- **AI:** Gemini 3.5 Flash (cloud) and Llama 3.1 8B via Ollama (local) — both tested and compared
+- **HTML parsing:** jsoup
+- **Test target:** [SauceDemo](https://www.saucedemo.com), with a second real site ([automationexercise.com](https://automationexercise.com)) used to stress-test the AI pipeline
 
-## The Chrome Popup Saga (worth remembering for the defense)
-- Real, recurring issue: Chrome's password leak-detection popup ("your password was found in a data breach") would randomly appear mid-test locally, stealing focus and breaking whatever field was mid-input at that moment (different field each time — lastName, postalCode, etc. — a clear sign of a race/timing issue, not a fixed locator bug).
-- Tried, in order: ChromeOptions prefs (`credentials_enable_service`, `password_manager_enabled`, `password_manager_leak_detection` → false), `--disable-features=PasswordLeakDetection`, `--incognito`, a defensive "dismiss popup if present" helper (didn't work — it's native browser UI, not part of the page DOM, so Selenium can't reliably click it).
-- Root cause understanding: this is partly a **server-side check** (Chrome pings Google Safe Browsing with a hash of typed credentials) — no local flag can 100% guarantee suppression, which explains the inconsistency.
-- **Fix that actually worked: `--guest` mode** (`options.addArguments("--guest")`) — a fully sandboxed guest profile avoids it, confirmed via repeated manual visible-browser testing.
-- Along the way, standardized on **headless by default everywhere** (`HEADLESS` env var, default true) since headless Chrome mostly avoids this entire category of native popups anyway, and it's the industry-standard way real teams run automated suites.
-- Also added **Firefox as a switchable browser** (`BROWSER` env var, chrome/firefox) as a backup path — Firefox never had this problem at all. Kept both; Chrome is default again now that `--guest` fixed it.
-- Real lesson for defense: this is a known, documented Selenium/Chrome community issue, not a personal mistake. The engineering story — investigate, try multiple fixes, understand root cause, land on a working solution instead of endlessly patching symptoms — is a legitimate, tell-able narrative.
+## Running the tests
 
-## Reporting
-- ExtentReports wired in via a TestNG listener (`ExtentTestListener`) — auto-generates `reports/ExtentReport.html` after every run, no changes needed to individual test files.
-- Screenshot-on-failure uses reflection to grab the `driver` field from whatever test class failed (`getDeclaredField` + `setAccessible(true)` — needed since `driver` is `protected`, not `public`).
-- `ThreadLocal<ExtentTest>` used for future-proofing (safe if tests ever run in parallel).
+```bash
+mvn clean test
+```
 
-## AI Layer — Stage 1 (in progress)
-- Design doc written first, before code — reframed the whole point of the AI layer: naive "paste HTML into ChatGPT" has no real engineering value; the actual contribution is a **structured extraction pipeline** (Selenium fetch → jsoup parse → categorized JSON) that produces cleaner, more consistent AI input than raw HTML.
-- Comparison experiment planned: Pipeline A (structured extraction → AI) vs Pipeline B (naive raw HTML → AI), measuring selector accuracy, uniqueness rate, token cost, manual-fix effort, consistency.
-- `fetch.PageFetcher` — wraps Selenium, returns rendered HTML as a String.
-- `parser.HtmlParser` + `parser.ExtractedElement` — jsoup-based, extracts inputs/buttons/links with tag, type, data-test, id, name, text.
-- Confirmed working end-to-end on SauceDemo login page: correctly extracted username/password/login-button with real attributes.
-- `cli.Main` — manual entry point to run and inspect each pipeline stage as it's built. Deliberately NOT a TestNG test — this is a tool, not a test, so it lives in `main`, not `test`, and doesn't extend `BaseTest`.
-- Next: selector priority logic (data-test > id > name > aria-label/text > CSS path > XPath) + uniqueness checking (critical for repeated components like per-product "Add to Cart" buttons).
+Runs headless by default (industry standard for CI). Override with environment variables:
 
-## Known cleanup items (not urgent)
-- `CheckoutStepOnePage` had a naming collision (`isDisplayed()` overloading `BasePage`'s method) — renamed, confirmed 0 usages elsewhere via IntelliJ.
-- `utils.App` — scratch file used to sanity-check `Generator`/`CustomerDetail`, should be removed before final polish.
+```bash
+HEADLESS=false mvn test              # watch the browser
+BROWSER=firefox mvn test             # use Firefox instead of Chrome
+```
 
----
+## Project structure
 
-## AI Layer — Stage 1 complete, real bugs found and fixed
+```
+src/main/java/
+├── base/          — BasePage, BaseFlow: shared Selenium action methods
+├── pages/         — Hand-written Page Objects
+│   ├── generated/ — AI-pipeline-generated Page Objects (Pipeline A)
+│   └── naive/     — Naive single-shot AI baseline output (Pipeline B)
+├── flows/         — Reusable multi-page user journeys
+├── fetch/         — PageFetcher: Selenium-based HTML retrieval
+├── parser/        — HtmlParser, SelectorPriorityFinder, WebElementSelector
+├── generator/     — PageObjectGenerator: turns selectors into real .java files
+├── ai/            — GeminiClient, OllamaClient, SelectorReviewClient, NaivePageObjectGenerator
+├── utils/         — ConfigReader, Generator (test data via Faker)
+└── cli/           — Manual entry points for running each pipeline stage
 
-Tested selector-priority logic against two real, messy pages (SauceDemo checkout-step-one and inventory), not just the simple login page. Found and fixed two genuine, evidence-based bugs along the way — good material for the report/defense, since each was found by testing against real data, not theorized in advance:
-
-**Bug 1 — naming collision from using element `type` instead of a specific identifier.** Original `buildVariableName` only looked at `element.getType()`, so multiple `type="text"` inputs (firstName, lastName, postalCode on checkout) would all generate the same Java variable name — a real compile-breaking collision, not just a style issue. Fixed by preferring `data-test` > `id` > `name` > `type` (in that priority order) when building the variable name, not just the selector.
-
-**Bug 2 — invalid Java identifiers from real-world messy `data-test` values.** SauceDemo has a product literally named `test.allTheThings() T-Shirt (Red)`, producing a `data-test` value with periods and parentheses. Initial fix only stripped hyphens/underscores/whitespace; broadened the regex to `[^a-zA-Z0-9]+` (split on any non-alphanumeric run) to handle arbitrary punctuation safely. This is a good real-world example for the report: production HTML is messier than clean tutorial examples, and the pipeline needed to handle that.
-
-**Design decision — priority-list pattern over nested if/else.** `SelectorPriorityFinder` uses a `List<Function<ExtractedElement, WebElementSelector>>` of small strategy methods (`tryDataTest`, `tryId`, `tryName`, `tryLinkText`), tried in order, first match wins. Chosen over a hand-written if/else-if chain specifically because priority order becomes "position in a list" rather than nested logic — adding a new priority level later means one new method + one line, not restructuring a conditional chain. (Started as a nested if/else-if from an earlier draft; refactored once the pattern's real benefit — extensibility — became clear.)
-
-**Design decision — deferred, not built: repeated-component / duplicate detection.** SauceDemo's own `data-test` values happen to bake in uniqueness per product (`add-to-cart-sauce-labs-backpack` vs `-bike-light`), so this specific site never actually triggered the "same selector pattern repeated across a tile" problem the design doc flagged as the hardest part. Deliberately chose not to build full parent-container-scoped duplicate detection given timeline — documented as a known limitation / future work, not silently skipped. If it comes up in defense: real production sites without per-item unique attributes would need this; SauceDemo's test-friendly design happened to sidestep it.
-
-## AI Layer — Stage 2: Page Object generation, working end to end
-
-`generator.PageObjectGenerator` takes the `List<WebElementSelector>` from Stage 1 and generates a complete, real, compilable Java Page Object class, written to disk.
-
-**Key design decisions:**
-- Generated classes extend the **existing** `BasePage` (not a separate one) — reuses `click()`, `type()`, `getText()`, `isDisplayed()` already built and proven throughout the framework. Keeps generated and hand-written pages structurally consistent, avoids maintaining two parallel hierarchies.
-- Generated classes live in a dedicated package, `pages/generated/`, with an `...AI` suffix (e.g. `InventoryPageAI`) — physically separate from hand-written pages so generated/draft code is never confused with production-reviewed code.
-- Method generation is type-aware: `input` → `type...(String)`, `button` → `click...()`, `a` (link) → `click...()` plus conditionally `getText...()`. Mirrors the same method-naming conventions already used in hand-written pages throughout the project — generated code looks like the project's own style, not foreign boilerplate.
-- `WebElementSelector` carries an `elementCategory` (input/button/a) and a `hasVisibleText` flag, both computed during Stage 1 extraction, so Stage 2's generation logic doesn't need to re-inspect raw HTML — clean separation between "figure out what this element is" (Stage 1) and "decide what code to generate for it" (Stage 2).
-
-**Real bug found and fixed (good debugging story for the report):** generated file showed every `getText...()` method duplicated verbatim, back to back. Root cause hunt: ruled out `HtmlParser` producing duplicate elements (verified with explicit count logging — 28 elements in, 28 out, no duplication) and ruled out `writeToFile` appending instead of overwriting (confirmed `Files.writeString` defaults to `CREATE`+`TRUNCATE_EXISTING`). Actual cause: in `PageObjectGenerator.buildMethods()`, the `"a"` case had two separate `getText(...)` code blocks back to back — one unconditional (leftover from before the `hasVisibleText` feature was added), one correctly gated behind `if (selector.hasVisibleText())`. The unconditional block was dead code left over from an incomplete edit, not a logic error in the loop or extraction — a good example of why "add a targeted print statement and verify with real numbers at each stage" beats guessing when a bug's symptoms (duplicate output) suggest a very different cause (duplicate data) than the real one (duplicate code path).
-
-**Deterministic vs. AI — where the line was actually drawn.** Considered using AI even for "is this an image-only link" type decisions; concluded that's a clean, binary, rule-based check (`text` field empty + tag is `<a>` → skip `getText()`) that doesn't need AI at all — cheaper, more predictable, more defensible than an API call for something a one-line condition solves. Reserving AI specifically for genuine judgment calls without a clean rule (e.g., "should an icon-only button with no visible text still get a `getText()` method, given some future use might read an aria-label instead"). This distinction — knowing which sub-problems need AI vs. which are better solved deterministically — is itself a deliberate design point worth stating explicitly in the report, not just implementation detail.
-
-**Where things stand on the design doc's build order:**
-- ✅ Selenium → retrieve rendered HTML
-- ✅ Parse with jsoup, categorize by type
-- ✅ Selector-generation + uniqueness logic (priority-based, Java-identifier-safe)
-- ✅ Page Object generation from structured data → real compilable `.java` files on disk
-- ⏳ Repeated-component detection — deferred, documented as future work (see above)
-- ⏳ AI call for genuine judgment-call refinement (single agent, narrow scope — planned next)
-- ⏳ Pipeline B (naive raw-HTML-to-AI baseline) for comparison
-- ⏳ Run both, collect metrics, visualize for report
-
-**Next planned step:** wire in one focused AI agent call — reviewing generated methods/names for genuine judgment calls the deterministic rules can't confidently resolve — before attempting any multi-agent split (considered, deliberately deferred as a possible stretch-goal comparison: does splitting the refinement task across multiple narrow agents improve consistency over one agent handling it all? Not yet built.).
+src/test/java/
+├── base/          — BaseTest (driver setup, headless/browser switching)
+├── ui/            — UI test suites (login, cart, checkout, e2e)
+└── api/           — API tests (Restful-Booker)
+```
 
 ---
 
-## Second real test site: automationexercise.com — found real gaps, fixed with evidence
+## Part 1: The test automation framework
 
-Before wiring the AI layer, tested the deterministic pipeline against a second, real, uncontrolled site (the one from the original Selenium project, before this PFE switched to SauceDemo) — deliberately, to see what a site *without* SauceDemo's clean `data-test` conventions would expose. This produced several genuine findings, each fixed with a scoped, evidence-based change rather than over-engineering:
+**Structure:** BasePage → Pages → Flows → Tests. Flows chain multiple pages into real user journeys (login → cart → checkout). Both raw ("noflow") tests and flow-based tests were kept deliberately, showing the progression from basic to abstracted test design.
 
-**Finding 1 — site uses `data-qa`, not `data-test`.** Pipeline was hardcoded to only check `data-test`, so a real, purpose-built automation attribute was invisible to it. Fixed by generalizing: `automation.attributes` config key (in `config.properties`) lists known conventions (`data-test,data-qa`) checked in priority order via a new `HtmlParser.getAutomationAttribute()` helper — rather than hardcoding either name. Verified the fix directly: email/password/name fields on login and signup forms went from generic `name`-based fallback selectors to precise, correct `data-qa`-based matches.
+**API testing:** 2 tests via [Restful-Booker](https://restful-booker.herokuapp.com) (an industry-standard practice API) — a ping health check and a full create/retrieve booking test. SauceDemo has no public API, so this was added as a separate, deliberate piece of coverage.
 
-**Finding 2 — `buildVariableName` never checked `element.getText()`, only fell through name → type.** This meant elements without `data-test`/`id`/`name` (common on this site — nav links, submit buttons) collapsed to identical generic names based on shared `type` (`"Login"` and `"Signup"` buttons both became `Button`; all 8 nav links became `Link`) — a real, compile-breaking collision. Fixed by adding a `text` fallback tier between `name` and `type` in the priority chain. Verified: every button/link now gets a distinct, meaningful name (`byLogin`, `bySignup`, `byHome`, `byContactUs`, etc.).
+**Configuration:** all URLs, credentials, and expected error messages are centralized in `config.properties` via a `ConfigReader` utility — no hardcoded values in test code.
 
-**Finding 3 — hidden CSRF token fields were being extracted as if they were real interactive elements.** `<input type="hidden" name="csrfmiddlewaretoken">` appeared 3 times (once per form on the page) with the same `name`, producing genuine, unavoidable duplicate fields — not a naming bug, a real structural duplicate. Root-caused correctly: CSRF tokens are server-issued security values, never meant for user interaction (no typing, no clicking, no assertions) — filtering them out is standard, defensible practice, not corner-cutting. Fixed by skipping any `<input type="hidden">` entirely in `HtmlParser`. Result: final generated class is fully clean, zero duplicates, 17 real interactive elements, all distinct and compilable.
+### CI/CD — two independent pipelines
 
-**Why this sequence matters for the report:** each fix was driven by running the real pipeline against real HTML and observing an actual failure/limitation, not guessed in advance — data-test-only assumption, missing text fallback, and hidden-field noise were all invisible until tested against a second site with different conventions. This is a legitimate before/after comparison: SauceDemo (clean, `data-test` everywhere) needed zero fixes; automationexercise.com (real, inconsistent conventions) needed three scoped, evidence-based fixes — a good demonstration that the pipeline's design (deterministic-first, config-driven attribute list, explicit noise filtering) generalizes reasonably well across differently-structured real sites, not just the one it was originally built against.
+**GitHub Actions** (`.github/workflows/ci.yml`) runs `mvn clean test` on every push, headless (GitHub's runners have no display).
 
-**Known, accepted limitation restated with fresh evidence:** true structural duplicates (same selector legitimately appearing more than once, like the CSRF tokens before filtering, or a hypothetical repeated "Add to Cart" button without a unique per-item attribute) still are not automatically scoped to a parent container — this remains deliberately deferred, documented future work, now demonstrated with a second real example beyond the original inventory-page case.
+**Jenkins** runs locally via Docker (JDK 17), triggered automatically by a GitHub webhook. The Jenkinsfile has three stages (Checkout, Build, Test) plus JUnit result publishing and artifact archiving. The Jenkins container uses Chromium rather than Chrome; `BaseTest` reads `CHROME_BIN`/`CHROMEDRIVER_BIN` environment variables when set (Jenkins), falling back to WebDriverManager's auto-detection otherwise (local, GitHub Actions).
 
----
+### Reporting
 
-## AI Judgment-Call Layer — working, tested across two backends
+ExtentReports is wired in via a TestNG listener (`ExtentTestListener`), generating `reports/ExtentReport.html` automatically after every run — no changes needed to individual test files. Screenshot-on-failure uses reflection (`getDeclaredField` + `setAccessible(true)`) to grab the `driver` field from whichever test class failed.
 
-Built `SelectorReviewClient` + `SelectorReviewPromptBuilder` + `SelectorReviewResult`: reviews only the *low-confidence* selectors (those that fell back to matching on visible text, tracked via a new `matchedVia` field on `WebElementSelector` and `isLowConfidence()`), one element at a time — not the whole page — asking a narrow, focused question and requiring structured JSON back.
+### The Chrome popup investigation
 
-**Backend 1 — Gemini 3.5 Flash (cloud, free tier initially, later upgraded to paid ~$10 billing).** Free tier (5 req/min) caused real, live rate-limit failures during testing — handled gracefully by existing try/catch, falling back to deterministic output rather than crashing (genuine evidence of resilient design, not a hypothetical). Upgraded to paid tier specifically to remove this friction; confirmed working with zero rate-limit errors afterward. Also hit occasional plain network timeouts (unrelated to billing) — fixed by adding explicit, more generous OkHttp timeouts (15s connect / 30s read) to `GeminiClient`.
+A real, recurring issue surfaced during development: Chrome's password leak-detection popup ("your password was found in a data breach") would intermittently appear mid-test, stealing focus and corrupting whatever field was being typed into at that moment — a different field each time, which was the first clue this was a timing/race issue rather than a broken locator.
 
-**Backend 2 — Llama 3.1 8B via Ollama (local, free, no API key, no rate limit).** Required switching the local model's prompt to use `format: "json"` (Ollama-specific field that enforces structured JSON output) — worked reliably, no markdown-fence issues.
+Attempted fixes, in order: ChromeOptions prefs to disable the password manager and leak detection, `--disable-features=PasswordLeakDetection`, `--incognito` mode, and a defensive "dismiss the popup if present" helper (which didn't work, since it's native browser UI, not part of the page DOM — Selenium can't reliably interact with it). Root cause: this check is partly server-side (Chrome sends a hash of typed credentials to Google's Safe Browsing service), so no local flag can fully guarantee suppression — explaining the inconsistency.
 
-**Real quality comparison between the two backends, same 8 elements, same prompt:** Gemini caught a specific, concrete defect — a stray Unicode icon character corrupting the "Products" nav link's `linkText` selector — and correctly flagged it as low-confidence/possibly-drop. Llama 3.1 8B gave plausible-sounding, mostly correct, but noticeably more generic feedback ("might not be unique," repeated near-identical phrasing across different elements) and did not catch the icon-character issue specifically. Both models reliably returned well-formed, parseable JSON. **Honest finding: cloud model showed better judgment-call specificity than the local 8B model on this task, though both are directionally correct and neither crashed the pipeline.**
-
-**Also observed: Gemini's own verdict on the same "Products" element was inconsistent across separate runs** (once said `keepElement: false`, another run said `true`, despite both times correctly identifying the underlying Unicode character problem) — a legitimate, reportable finding about LLM judgment-call consistency, not a bug in the pipeline itself.
-
-**Practical fix needed and applied:** IntelliJ stores environment variables (like `GEMINI_API_KEY`) per run configuration, not globally — every new `MainX` scratch class needed the key re-added manually. Fixed properly by adding `GEMINI_API_KEY` to IntelliJ's **Run → Edit Configurations → Templates → Application** section, so it's inherited automatically by every future run configuration. Worth mentioning as a real, practical development friction and its proper fix, not just a code detail.
+**What actually worked:** Chrome's `--guest` mode, which uses a fully sandboxed profile. Confirmed via repeated manual, visible-browser testing. Along the way, the project also standardized on headless-by-default everywhere (matching how real teams run automated suites) and added Firefox as a switchable backup browser, since it never exhibited the issue at all.
 
 ---
 
-## Pipeline B — naive baseline, built and tested
+## Part 2: The AI-assisted generation pipeline
 
-Built `NaivePageObjectGenerator` (`ai` package) + `Main7`: sends the **entire raw HTML** of a page directly to Gemini in one shot, asks for a complete Java Page Object class in return, no structured extraction, no priority logic, no jsoup — the "paste into ChatGPT" baseline the project's original design doc set out to compare against. Prompt gave reasonable, fair guidance (prefer data-test/data-qa/id/name over text, skip hidden inputs) rather than being deliberately unhelpful — an honest, fair baseline, not a strawman.
+### Pipeline A — structured extraction and generation
 
-**Results — genuinely mixed, and worth reporting honestly rather than only favorably:**
+**Stage 1 — extraction.** Selenium fetches the fully-rendered HTML of a live page. jsoup parses it and categorizes every interactive element (inputs, buttons, links). For each element, a priority-ordered strategy picks the best available selector: `data-test`/`data-qa` → `id` → `name` → visible text, in that order — implemented as a list of small strategy methods tried in sequence, rather than a nested if/else chain, so adding a new priority tier later means adding one method, not restructuring existing logic.
 
-*SauceDemo:* naive output correctly used `data-test` selectors for real interactive elements, but also **hallucinated two methods** (`getCredentialsText()`, `getPasswordText()`) for what are actually static page-instruction text blocks, not real interactive elements — content the structured Pipeline A never would have extracted in the first place, since it only looks at `<input>`/`<button>`/`<a>` tags. A concrete example of the naive approach inventing plausible-but-wrong purpose for non-interactive content.
+**Stage 2 — generation.** The structured selector list is turned into a complete, real, compilable Java Page Object class, written directly to disk. Generated classes extend the same `BasePage` used everywhere else in the framework (reusing `click()`, `type()`, `getText()`, `isDisplayed()`), and live in a dedicated `pages/generated/` package so they're never confused with hand-written, production-reviewed code.
 
-*automationexercise.com:* naive output was surprisingly strong — correctly identified and used `data-qa` (the site's actual convention) without being told which specific site uses it, and used `href`-based CSS selectors for navigation links (e.g. `a[href='/products']`) instead of falling back to fragile `linkText` matching — arguably **more robust than Pipeline A's own text-based fallback** for the same elements. Correctly appears to have skipped hidden CSRF fields too.
+**Stage 3 — AI judgment-call review.** Elements that could only be matched via visible text (the least stable strategy) are flagged as low-confidence and sent — one at a time, not the whole page — to an AI for a focused second opinion: should this element be kept, what methods should it expose, and is there a specific concern worth flagging. The AI's response is required as structured JSON, parsed defensively (handling markdown-fence wrapping, malformed responses, and API failures without crashing the pipeline).
 
-**Honest overall conclusion for the report:** Pipeline B (naive) is not uniformly worse — on a messier, real-world site it produced comparably good or arguably better selectors in some cases (href > linkText). Pipeline A's real, defensible advantages are not "always better output" but: (1) determinism and traceability — every selector's confidence/origin is explicitly tracked, not a black-box guess; (2) explicit, visible low-confidence flagging for human review, vs. Pipeline B's silent one-shot answer with no confidence signal at all; (3) proven, debugged handling of edge cases (hidden fields, Java-identifier-safety, naming collisions) developed through iterative testing against real sites — Pipeline B's quality on any *new*, untested site is unverified and could vary run to run, given the earlier-observed inconsistency in Gemini's own judgment calls.
+### Real bugs found and fixed along the way
 
-## Remaining work (as of this session)
-- Small metrics table summarizing the above comparison (selector accuracy / low-confidence rate / notable hits-and-misses per pipeline) for the report
-- Fix `LoginPageNaiveB.java` / `LoginPageNaiveB2.java` package declarations (should both be `package pages.naive;`, currently missing/wrong)
-- Decide whether to wire AI suggestions back into `PageObjectGenerator` automatically, or explicitly document current design as human-in-the-loop (AI flags, developer decides) — either is a legitimate, defensible choice
-- Final README + report writeup (PROJECT_NOTES.md already contains most of the raw material/reasoning needed)
-- Minor cleanup: remove `utils.App` scratch file; consolidate/tidy `MainX` scratch classes (Main, Main3, Main4, Main5, Main6, Main7, OlamaTest) into fewer, clearly-named, documented entry points before final submission
+Testing against real, messy HTML (not just clean tutorial examples) surfaced genuine issues, each fixed with a scoped, evidence-based change:
+
+- **Naming collisions from using element type instead of a specific identifier.** Multiple `type="text"` inputs (firstName, lastName, postalCode) all generated the same, colliding Java variable name. Fixed by preferring `data-test` > `id` > `name` > visible text > `type`, in that order, for naming — not just for selector matching.
+- **Invalid Java identifiers from real-world punctuation.** A product literally named `test.allTheThings() T-Shirt (Red)` produced attribute values with periods and parentheses, which aren't valid in Java identifiers. Fixed by splitting on any non-alphanumeric character run (`[^a-zA-Z0-9]+`) rather than just hyphens and underscores.
+- **A second real site (automationexercise.com) uses `data-qa`, not `data-test`.** The pipeline was hardcoded to one convention. Fixed by making the list of recognized automation attributes configurable (`automation.attributes=data-test,data-qa` in `config.properties`), checked in priority order.
+- **Hidden CSRF token fields were being extracted as real interactive elements**, producing genuine, unavoidable duplicate fields (the same token appears once per form on a page). Root-caused correctly: these are server-issued security values, never meant for user interaction. Fixed by filtering out any `<input type="hidden">` during extraction.
+- **A duplicate-method generation bug** traced back to two near-identical code blocks in `PageObjectGenerator` — one dead, leftover from an earlier edit — rather than any duplication in the underlying data. Found by explicitly logging element counts at each pipeline stage rather than guessing from symptoms.
+
+### Deterministic rules vs. AI — where the line was drawn
+
+Not every decision was routed to AI. Whether an image-only link should get a `getText()` method, for example, is a clean, binary, rule-based check (empty visible text + `<a>` tag → skip) that doesn't benefit from an API call. AI was reserved specifically for genuine judgment calls without a clean rule — like assessing whether a text-based selector is risky enough to flag for review. Knowing which sub-problems need AI and which are better solved deterministically was a deliberate design choice, not an afterthought.
+
+**Known, deliberately deferred limitation:** true structural duplicates — the same selector legitimately appearing more than once, such as a repeated "Add to Cart" button without a unique per-item attribute — are not automatically scoped to a parent container. Both SauceDemo and automationexercise.com happened to have unique-enough attributes that this rarely mattered in testing, but a production version would need this. Documented here as future work rather than built under time pressure.
+
+### AI backends — Gemini vs. local Llama, compared
+
+Two backends were built and tested against the same 8 low-confidence elements, same prompt:
+
+**Gemini 3.5 Flash (cloud):** caught a specific, concrete defect — a stray Unicode icon character corrupting a navigation link's selector — and correctly flagged it for review. Free tier's 5 requests/minute limit caused real, live rate-limit failures during testing, handled gracefully by falling back to deterministic output rather than crashing; upgraded to a paid tier (~$10) to remove this friction entirely.
+
+**Llama 3.1 8B via Ollama (local, free, no rate limit):** gave plausible, mostly correct, but noticeably more generic feedback, and did not catch the icon-character issue specifically. Both models reliably returned well-formed JSON.
+
+**Honest finding:** the larger cloud model showed better judgment-call specificity than the local 8B model on this task. Also notable: Gemini's own verdict on the same element varied between separate runs (once recommending removal, another time not), despite consistently identifying the same underlying defect — a real, reportable finding about LLM consistency on subjective judgment calls, independent of any bug in the pipeline itself.
+
+### Pipeline B — the naive baseline
+
+For comparison, raw HTML (the entire page, no structuring) was sent directly to an AI in one shot, asking it to generate a complete Page Object with no filtering or extraction beforehand. The prompt gave reasonable, fair guidance (prefer stable attributes, skip hidden inputs) rather than being deliberately unhelpful, to keep the comparison honest.
+
+**Results were genuinely mixed:**
+
+| | SauceDemo | automationexercise.com |
+|---|---|---|
+| Pipeline A | 28 elements, 0 duplicates, all correctly matched | 17 elements after 3 real fixes; used `linkText` for nav (flagged low-confidence) |
+| Pipeline B (naive) | Correctly used `data-test`, but hallucinated 2 methods for non-interactive page-instruction text | Correctly inferred `data-qa` unprompted; used `href`-based selectors for nav — arguably more robust than Pipeline A's own fallback |
+
+The naive baseline was not uniformly worse. On the messier site, it occasionally made better individual selector choices. Pipeline A's real advantages are not "always-better output," but **determinism and traceability** (every selector's origin is explicitly tracked, not a black-box guess), **explicit low-confidence flagging** for human review rather than a silent one-shot answer, and **proven resilience** — the pipeline degrades gracefully on API failure rather than having a single point of failure.
+
+---
+
+## Design decisions worth knowing
+
+- **Headless is the default everywhere** (local, GitHub Actions, Jenkins) — matching standard industry practice, and the fix that ultimately resolved the Chrome popup issue.
+- **The AI layer is intentionally human-in-the-loop.** Low-confidence elements are flagged with a concern and confidence score, not silently auto-corrected.
+- **Repeated-component detection is deliberately deferred** — a real, acknowledged limitation, not an oversight.
+- **Hidden inputs are explicitly filtered** during extraction, since they are not genuine interactive elements.
+
+## Known limitations
+
+- Repeated/duplicate selector components are not automatically scoped to a parent container.
+- The naive Pipeline B baseline was tested against two pages — a larger sample would strengthen the comparison further.
+- AI judgment-call consistency varies between runs and between models.
+
+## Author
+
+Abdelhafid Idbahamd — ENSET Mohammedia, Master's in Computer Engineering (Big Data & Cloud Computing)
