@@ -11,7 +11,7 @@ import okhttp3.Response;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public class AIClient {
+public class OllamaClient implements AIProvider {
 
     private static final String API_URL = "http://localhost:11434/api/generate";
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
@@ -24,11 +24,11 @@ public class AIClient {
     private final Gson gson = new Gson();
     private final String model;
 
-    public AIClient() {
+    public OllamaClient() {
         this("llama3.1:8b"); // default — override via constructor if using a different pulled model
     }
 
-    public AIClient(String model) {
+    public OllamaClient(String model) {
         this.model = model;
     }
 

@@ -147,4 +147,4 @@ The naive baseline was not uniformly worse. On the messier site, it occasionally
 
 ## Author
 
-Abdelhafid Idbahamd — ENSET Mohammedia, Master's in Computer Engineering (Big Data & Cloud Computing)
+Abdelhafid — ENSET Mohammedia, Master's in Computer Engineering (Big Data & Cloud Computing)

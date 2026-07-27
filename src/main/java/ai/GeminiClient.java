@@ -11,7 +11,7 @@ import okhttp3.Response;
 
 import java.io.IOException;
 
-public class GeminiClient {
+public class GeminiClient implements AIProvider {
 
     private static final String MODEL = "gemini-3.5-flash";
     private static final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent";

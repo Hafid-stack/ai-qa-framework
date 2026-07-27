@@ -1,11 +1,11 @@
 package cli;
 
-import ai.AIClient;
+import ai.OllamaClient;
 
 public class OlamaTest {
     public static void main(String[] args) throws java.io.IOException {
-        AIClient aiClient = new AIClient();
-        String reply = aiClient.sendPrompt(
+        OllamaClient ollamaClient = new OllamaClient();
+        String reply = ollamaClient.sendPrompt(
                 "Respond with ONLY this exact JSON, no other text: {\"message\": \"hello\"}"
         );
         System.out.println(reply);

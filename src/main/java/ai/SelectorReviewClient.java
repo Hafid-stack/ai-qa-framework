@@ -11,12 +11,12 @@ import java.util.List;
 public class SelectorReviewClient {
     //Use this one for Ollama Localy 8B parameter
     //private final AIClient aiClient;
-    private final GeminiClient aiClient;
+    private final AIProvider aiClient;
     private final SelectorReviewPromptBuilder promptBuilder;
     private final Gson gson = new Gson();
 
-    public SelectorReviewClient() {
-        this.aiClient = new GeminiClient();
+    public SelectorReviewClient(AIProvider aiClient) {
+        this.aiClient = aiClient;
         this.promptBuilder = new SelectorReviewPromptBuilder();
     }
 
