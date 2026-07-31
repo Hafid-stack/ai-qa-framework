@@ -40,15 +40,23 @@ public class Main {
         System.out.print("Enter a class name for the generated Page Object (e.g. LoginPageAI): ");
         String className = scanner.nextLine().trim();
 
+        System.out.print("Does reaching this page require logging in first? (y/n): ");
+        boolean requiresLogin = scanner.nextLine().trim().equalsIgnoreCase("y");
+
         ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.addArguments("--headless=new");
+        if (requiresLogin) {
+            // Needs a real, visible window so the user can log in by hand below.
+            chromeOptions.addArguments("--window-size=1400,1000");
+        } else {
+            chromeOptions.addArguments("--headless=new");
+        }
         WebDriver driver = new ChromeDriver(chromeOptions);
 
         try {
             switch (choice) {
-                case "1" -> runPipelineA(driver, url, className, scanner);
-                case "2" -> runPipelineAWithReview(driver, url, className, scanner);
-                case "3" -> runPipelineB(driver, url, className);
+                case "1" -> runPipelineA(driver, url, className, scanner, requiresLogin);
+                case "2" -> runPipelineAWithReview(driver, url, className, scanner, requiresLogin);
+                case "3" -> runPipelineB(driver, url, className, scanner, requiresLogin);
                 default -> System.out.println("Unrecognized option, exiting.");
             }
         } finally {
@@ -56,9 +64,28 @@ public class Main {
         }
     }
 
-    private static void runPipelineA(WebDriver driver, String url, String className, Scanner scanner) throws IOException {
+    // Fetches the target page's HTML. If it requires login, this pauses so the user can log
+    // in (and navigate anywhere else needed) by hand in the visible browser window, then
+    // captures whatever is currently loaded once they confirm — rather than assuming any
+    // particular login form, which would only work for one specific site.
+    private static String fetchHtml(WebDriver driver, String url, Scanner scanner, boolean requiresLogin) {
         PageFetcher pageFetcher = new PageFetcher(driver);
-        String html = pageFetcher.getHtml(url);
+
+        if (!requiresLogin) {
+            return pageFetcher.getHtml(url);
+        }
+
+        driver.navigate().to(url);
+        System.out.println();
+        System.out.println("A browser window is open at: " + url);
+        System.out.println("Log in (and navigate to the exact page you want captured, if it's not this one),");
+        System.out.print("then press Enter here to continue: ");
+        scanner.nextLine();
+        return pageFetcher.getCurrentHtml();
+    }
+
+    private static void runPipelineA(WebDriver driver, String url, String className, Scanner scanner, boolean requiresLogin) throws IOException {
+        String html = fetchHtml(driver, url, scanner, requiresLogin);
 
         java.nio.file.Files.writeString(java.nio.file.Paths.get("page_dump.html"), html);
         System.out.println("HTML dumped to page_dump.html");
@@ -134,8 +161,8 @@ public class Main {
         };
     }
 
-    private static void runPipelineAWithReview(WebDriver driver, String url, String className, Scanner scanner) throws IOException {
-        List<WebElementSelector> selectors = extractSelectors(driver, url);
+    private static void runPipelineAWithReview(WebDriver driver, String url, String className, Scanner scanner, boolean requiresLogin) throws IOException {
+        List<WebElementSelector> selectors = extractSelectors(driver, url, scanner, requiresLogin);
         List<WebElementSelector> lowConfidence = selectors.stream().filter(WebElementSelector::isLowConfidence).toList();
 
         System.out.println("Total selectors: " + selectors.size());
@@ -167,18 +194,16 @@ public class Main {
         writeGeneratedFile("src/main/java/pages/generated/", className, classSource);
     }
 
-    private static void runPipelineB(WebDriver driver, String url, String className) throws IOException {
-        PageFetcher pageFetcher = new PageFetcher(driver);
-        String html = pageFetcher.getHtml(url);
+    private static void runPipelineB(WebDriver driver, String url, String className, Scanner scanner, boolean requiresLogin) throws IOException {
+        String html = fetchHtml(driver, url, scanner, requiresLogin);
 
         NaivePageObjectGenerator naiveGenerator = new NaivePageObjectGenerator();
         String result = naiveGenerator.generateFromRawHtml(className, html);
         writeGeneratedFile("src/main/java/pages/naive/", className, result);
     }
 
-    private static List<WebElementSelector> extractSelectors(WebDriver driver, String url) throws IOException {
-        PageFetcher pageFetcher = new PageFetcher(driver);
-        String html = pageFetcher.getHtml(url);
+    private static List<WebElementSelector> extractSelectors(WebDriver driver, String url, Scanner scanner, boolean requiresLogin) throws IOException {
+        String html = fetchHtml(driver, url, scanner, requiresLogin);
 
         java.nio.file.Files.writeString(java.nio.file.Paths.get("page_dump.html"), html);
         System.out.println("HTML dumped to page_dump.html");
