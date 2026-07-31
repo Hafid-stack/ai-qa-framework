@@ -10,10 +10,7 @@ import generator.PageObjectGenerator;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import parser.ExtractedElement;
-import parser.HtmlParser;
-import parser.SelectorPriorityFinder;
-import parser.WebElementSelector;
+import parser.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -49,7 +46,7 @@ public class Main {
 
         try {
             switch (choice) {
-                case "1" -> runPipelineA(driver, url, className);
+                case "1" -> runPipelineA(driver, url, className, scanner);
                 case "2" -> runPipelineAWithReview(driver, url, className, scanner);
                 case "3" -> runPipelineB(driver, url, className);
                 default -> System.out.println("Unrecognized option, exiting.");
@@ -59,16 +56,82 @@ public class Main {
         }
     }
 
-    private static void runPipelineA(WebDriver driver, String url, String className) throws IOException {
-        List<WebElementSelector> selectors = extractSelectors(driver, url);
+    private static void runPipelineA(WebDriver driver, String url, String className, Scanner scanner) throws IOException {
+        PageFetcher pageFetcher = new PageFetcher(driver);
+        String html = pageFetcher.getHtml(url);
 
+        java.nio.file.Files.writeString(java.nio.file.Paths.get("page_dump.html"), html);
+        System.out.println("HTML dumped to page_dump.html");
+
+        HtmlParser htmlParser = new HtmlParser();
+        // Repeated-component detection now happens inside extractSections, scoped to the
+        // Body region only (header/footer are removed first) and stripped from the DOM
+        // before the Body's own flat elements are extracted — so the two never overlap.
+        List<PageSection> sections = htmlParser.extractSections(html);
+        PageSection bodySection = sections.stream()
+                .filter(s -> s.getName().equals("Body"))
+                .findFirst()
+                .orElseThrow();
+        List<RepeatedComponentGroup> groups = bodySection.getComponentGroups();
+
+        SelectorPriorityFinder finder = new SelectorPriorityFinder();
         PageObjectGenerator generator = new PageObjectGenerator();
-        String classSource = generator.generateClassSource(className, selectors);
-        writeGeneratedFile("src/main/java/pages/generated/", className, classSource);
 
-        long lowConfidenceCount = selectors.stream().filter(WebElementSelector::isLowConfidence).count();
-        System.out.println("Total selectors: " + selectors.size());
-        System.out.println("Low-confidence: " + lowConfidenceCount);
+        System.out.println("Detected " + groups.size() + " repeated component pattern(s) "
+                + "(each becomes a nested class inside the Body page, not a separate file):");
+        for (RepeatedComponentGroup group : groups) {
+            System.out.println("  Pattern: " + group.getContainerPath() + " -> " + group.getRepeatCount() + " instances");
+        }
+
+        System.out.println();
+        System.out.println("Which sections should be generated?");
+        System.out.println("  b - Body only (default; use this for most pages)");
+        System.out.println("  a - All sections (body, header, footer)");
+        System.out.println("  h - Header only");
+        System.out.println("  f - Footer only");
+        System.out.print("Choice: ");
+        String sectionChoice = scanner.nextLine().trim().toLowerCase();
+
+        int totalSelectors = 0;
+        int totalLowConfidence = 0;
+
+        for (PageSection section : sections) {
+            if (!shouldGenerate(section.getName(), sectionChoice)) {
+                continue;
+            }
+
+            if (section.isEmpty()) {
+                System.out.println("Section " + section.getName() + ": no interactive elements, skipped.");
+                continue;
+            }
+
+            List<WebElementSelector> selectors = finder.getOrder(section.getElements());
+            long lowConfidence = selectors.stream().filter(WebElementSelector::isLowConfidence).count();
+
+            String sectionClassName = className + section.getName();
+            String classSource = generator.generateClassSource(sectionClassName, selectors, section.getComponentGroups());
+            writeGeneratedFile("src/main/java/pages/generated/", sectionClassName, classSource);
+
+            System.out.println("Section " + section.getName() + ": "
+                    + selectors.size() + " selectors, "
+                    + lowConfidence + " low-confidence");
+
+            totalSelectors += selectors.size();
+            totalLowConfidence += lowConfidence;
+        }
+
+        System.out.println("---");
+        System.out.println("Generated " + totalSelectors + " selectors, "
+                + totalLowConfidence + " low-confidence");
+    }
+
+    private static boolean shouldGenerate(String sectionName, String choice) {
+        return switch (choice) {
+            case "a" -> true;
+            case "h" -> sectionName.equals("Header");
+            case "f" -> sectionName.equals("Footer");
+            default -> sectionName.equals("Body");
+        };
     }
 
     private static void runPipelineAWithReview(WebDriver driver, String url, String className, Scanner scanner) throws IOException {
@@ -113,10 +176,12 @@ public class Main {
         writeGeneratedFile("src/main/java/pages/naive/", className, result);
     }
 
-    private static List<WebElementSelector> extractSelectors(WebDriver driver, String url) {
+    private static List<WebElementSelector> extractSelectors(WebDriver driver, String url) throws IOException {
         PageFetcher pageFetcher = new PageFetcher(driver);
         String html = pageFetcher.getHtml(url);
 
+        java.nio.file.Files.writeString(java.nio.file.Paths.get("page_dump.html"), html);
+        System.out.println("HTML dumped to page_dump.html");
         HtmlParser htmlParser = new HtmlParser();
         List<ExtractedElement> elements = htmlParser.extractInteractiveElements(html);
 

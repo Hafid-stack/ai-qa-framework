@@ -55,8 +55,14 @@ public class SelectorPriorityFinder {
 
     private WebElementSelector tryLinkText(ExtractedElement element) {
         if (element.getText() == null || element.getText().isEmpty()) return null;
-        return new WebElementSelector(buildVariableName(element), element.getText(),
-                "linkText", element.getTagName(), elementHasText(element), "text");
+
+        // Raw page text often carries leading/trailing whitespace and icon-font glyphs,
+        // so an exact By.linkText match fails. normalize-space() collapses whitespace,
+        // and matching on contains() tolerates leading icon characters.
+        String cleanText = element.getText().replaceAll("[^\\p{Print}]", "").trim();
+
+        return new WebElementSelector(buildVariableName(element), cleanText,
+                "xpath", element.getTagName(), elementHasText(element), "text");
     }
 
     private boolean elementHasText(ExtractedElement element) {

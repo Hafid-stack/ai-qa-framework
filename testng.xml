@@ -23,4 +23,9 @@
             <class name="api.BookingTest"/>
         </classes>
     </test>
+    <test name="Generated Page Objects Demo">
+        <classes>
+            <class name="ui.generated.AutomationExerciseGeneratedFlowTest"/>
+        </classes>
+    </test>
 </suite>

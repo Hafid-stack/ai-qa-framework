@@ -42,6 +42,8 @@ build/
 *.log
 test-output/
 reports/
+# Debug dump written by cli.Main on every pipeline run — not meaningful to track
+page_dump.html
 
 # Environment variables / secrets (important once we add the AI API key)
 .env
