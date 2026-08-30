@@ -162,7 +162,12 @@ public class Main {
     }
 
     private static void runPipelineAWithReview(WebDriver driver, String url, String className, Scanner scanner, boolean requiresLogin) throws IOException {
-        List<WebElementSelector> selectors = extractSelectors(driver, url, scanner, requiresLogin);
+        // Deliberately the SAME extraction option 1 performs — sectioning plus repeated-component
+        // detection, Body scope. Reviewing a different extraction from the one that is actually
+        // emitted would make the review say nothing about the artefact the engineer receives.
+        PageSection body = extractBodySection(driver, url, scanner, requiresLogin);
+        SelectorPriorityFinder finder = new SelectorPriorityFinder();
+        List<WebElementSelector> selectors = finder.getOrder(body.getElements());
         List<WebElementSelector> lowConfidence = selectors.stream().filter(WebElementSelector::isLowConfidence).toList();
 
         System.out.println("Total selectors: " + selectors.size());
@@ -190,7 +195,7 @@ public class Main {
         }
 
         PageObjectGenerator generator = new PageObjectGenerator();
-        String classSource = generator.generateClassSource(className, selectors);
+        String classSource = generator.generateClassSource(className, selectors, body.getComponentGroups());
         writeGeneratedFile("src/main/java/pages/generated/", className, classSource);
     }
 
@@ -199,19 +204,22 @@ public class Main {
 
         NaivePageObjectGenerator naiveGenerator = new NaivePageObjectGenerator();
         String result = naiveGenerator.generateFromRawHtml(className, html);
-        writeGeneratedFile("src/main/java/pages/naive/", className, result);
+        // Written OUTSIDE src/main/java on purpose: this is raw, unvalidated LLM output kept
+        // as experimental evidence. If it were placed in the source tree, any non-compiling
+        // response from the model would break "mvn compile" for the whole project (and the CI build).
+        writeGeneratedFile("generated-output/naive/", className, result);
     }
 
-    private static List<WebElementSelector> extractSelectors(WebDriver driver, String url, Scanner scanner, boolean requiresLogin) throws IOException {
+    private static PageSection extractBodySection(WebDriver driver, String url, Scanner scanner, boolean requiresLogin) throws IOException {
         String html = fetchHtml(driver, url, scanner, requiresLogin);
 
         java.nio.file.Files.writeString(java.nio.file.Paths.get("page_dump.html"), html);
         System.out.println("HTML dumped to page_dump.html");
-        HtmlParser htmlParser = new HtmlParser();
-        List<ExtractedElement> elements = htmlParser.extractInteractiveElements(html);
 
-        SelectorPriorityFinder finder = new SelectorPriorityFinder();
-        return finder.getOrder(elements);
+        return new HtmlParser().extractSections(html).stream()
+                .filter(s -> s.getName().equals("Body"))
+                .findFirst()
+                .orElseThrow();
     }
 
     private static void writeGeneratedFile(String folder, String className, String content) throws IOException {

@@ -67,54 +67,58 @@ public class HtmlParser {
             if (input.attr("type").equalsIgnoreCase("hidden")) {
                 continue;
             }
-            elements.add(new ExtractedElement(
-                    "input",
-                    input.attr("type"),
-                    getAutomationAttribute(input),
-                    input.attr("id"),
-                    input.attr("name"),
-                    input.attr("value")
-            ));
+            elements.add(buildElement(input, "input", input.attr("type"), input.attr("value"), ""));
         }
 
         Elements buttons = scope.select("button");
         for (Element button : buttons) {
-            elements.add(new ExtractedElement(
-                    "button",
-                    "button",
-                    getAutomationAttribute(button),
-                    button.attr("id"),
-                    button.attr("name"),
-                    button.text()
-            ));
+            elements.add(buildElement(button, "button", "button", button.text(), ""));
         }
 
         Elements links = scope.select("a");
         for (Element link : links) {
-            elements.add(new ExtractedElement(
-                    "a",
-                    "link",
-                    getAutomationAttribute(link),
-                    link.attr("id"),
-                    link.attr("name"),
-                    link.text()
-            ));
+            elements.add(buildElement(link, "a", "link", link.text(), ""));
         }
 
         return elements;
     }
 
-    private String getAutomationAttribute(Element el) {
+    // Single construction path for every element, so the automation-attribute NAME is always
+    // carried alongside its value. Emitting the value under a hard-coded attribute name is
+    // how a page that uses data-qa ends up with an unmatchable [data-test='...'] locator.
+    private ExtractedElement buildElement(Element el, String tagName, String type, String text, String cssClass) {
+        AutomationAttribute automation = findAutomationAttribute(el);
+        return new ExtractedElement(
+                tagName, type, automation.value, el.attr("id"), el.attr("name"), text,
+                cssClass, automation.name
+        );
+    }
+
+    // The attribute name that matched, together with its value. Both are needed: the value
+    // identifies the element, the name is what the emitted CSS selector has to say.
+    private static final class AutomationAttribute {
+        final String name;
+        final String value;
+        AutomationAttribute(String name, String value) { this.name = name; this.value = value; }
+    }
+
+    private AutomationAttribute findAutomationAttribute(Element el) {
         String configuredAttributes = ConfigReader.get("automation.attributes");
-        String[] attributeNames = configuredAttributes.split(",");
-        for (String attr : attributeNames) {
-            String value = el.attr(attr.trim());
+        if (configuredAttributes == null || configuredAttributes.isBlank()) {
+            return new AutomationAttribute(DEFAULT_AUTOMATION_ATTRIBUTE, "");
+        }
+        for (String attr : configuredAttributes.split(",")) {
+            String attributeName = attr.trim();
+            if (attributeName.isEmpty()) continue;
+            String value = el.attr(attributeName);
             if (!value.isEmpty()) {
-                return value;
+                return new AutomationAttribute(attributeName, value);
             }
         }
-        return "";
+        return new AutomationAttribute(DEFAULT_AUTOMATION_ATTRIBUTE, "");
     }
+
+    private static final String DEFAULT_AUTOMATION_ATTRIBUTE = "data-test";
     // Same as extractFrom, but also captures each element's own class attribute, needed
     // by RepeatedComponentDetector to build a selector relative to a card's root element.
     // Package-visible: used by RepeatedComponentDetector to extract the interactive
@@ -142,9 +146,6 @@ public class HtmlParser {
     }
 
     private ExtractedElement buildStructuredElement(Element el, String tagName, String type, String text) {
-        return new ExtractedElement(
-                tagName, type, getAutomationAttribute(el), el.attr("id"), el.attr("name"), text,
-                el.attr("class")
-        );
+        return buildElement(el, tagName, type, text, el.attr("class"));
     }
 }

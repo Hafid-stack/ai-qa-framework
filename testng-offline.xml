@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Offline suite: the generation pipeline's own unit tests.
+
+  Deliberately excludes every test that drives a browser or calls a remote service, so this
+  suite is deterministic and can gate a build. Run it with:
+
+      mvn -B test -Dsurefire.suiteXmlFiles=testng-offline.xml
+-->
+<suite name="AI-QA-Framework Offline Suite">
+    <test name="Pipeline Unit Tests">
+        <classes>
+            <class name="parser.HtmlParserTest"/>
+            <class name="parser.SelectorPriorityFinderTest"/>
+            <class name="generator.PageObjectGeneratorTest"/>
+        </classes>
+    </test>
+</suite>

@@ -6,8 +6,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.time.Duration;
 
@@ -51,36 +49,6 @@ public class BasePage {
         el.clear();
         el.sendKeys(text);
     }
-
-//protected void type(By locator, String text) {
-//
-//    WebElement element =
-//            wait.until(ExpectedConditions.elementToBeClickable(locator));
-//
-//    int attempts = 0;
-//
-//    while (attempts < 3) {
-//
-//        element.clear();
-//
-//        if (text.isEmpty()) {
-//            element.sendKeys(" ");
-//            element.sendKeys(Keys.BACK_SPACE);
-//        } else {
-//            element.sendKeys(text);
-//        }
-//
-//        String enteredText = element.getAttribute("value");
-//
-//        if (enteredText.equals(text)) {
-//            return;
-//        }
-//
-//        attempts++;
-//    }
-
-//    throw new RuntimeException("Failed to type text into field: " + locator);
-//}
 
     protected String getText(By locator) {
         return waitForVisible(locator).getText();

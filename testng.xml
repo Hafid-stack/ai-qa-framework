@@ -4,6 +4,16 @@
     <listeners>
         <listener class-name="utils.ExtentTestListener"/>
     </listeners>
+    <!-- Offline tests for the generation pipeline itself: no browser, no network, no live
+         site, so a failure here is always a defect in this project rather than an outage
+         somewhere else. Listed first because it is the fastest signal in the suite. -->
+    <test name="Pipeline Unit Tests">
+        <classes>
+            <class name="parser.HtmlParserTest"/>
+            <class name="parser.SelectorPriorityFinderTest"/>
+            <class name="generator.PageObjectGeneratorTest"/>
+        </classes>
+    </test>
     <test name="UI Tests">
         <classes>
             <class name="ui.logintests.noflow.LoginTest"/>

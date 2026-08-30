@@ -33,6 +33,21 @@ public class NaivePageObjectGenerator {
             %s
             """.formatted(className, rawHtml);
 
-        return geminiClient.sendPrompt(prompt);
+        return stripMarkdownFences(geminiClient.sendPrompt(prompt));
+    }
+
+    // The model sometimes wraps its answer in ```java ... ``` despite being told not to.
+    // That is a response-formatting artefact, not a code-quality defect, so it is removed
+    // before the output is evaluated - otherwise Pipeline B would fail the "does it compile?"
+    // metric for a purely cosmetic reason and the A/B comparison would be unfair.
+    private String stripMarkdownFences(String text) {
+        String trimmed = text.trim();
+        if (trimmed.startsWith("```")) {
+            trimmed = trimmed.replaceFirst("^```(java)?", "").trim();
+            if (trimmed.endsWith("```")) {
+                trimmed = trimmed.substring(0, trimmed.length() - 3).trim();
+            }
+        }
+        return trimmed;
     }
 }

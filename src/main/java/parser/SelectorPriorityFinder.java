@@ -37,13 +37,22 @@ public class SelectorPriorityFinder {
 
     private WebElementSelector tryDataTest(ExtractedElement element) {
         if (element.getDataTest() == null || element.getDataTest().isEmpty()) return null;
-        return new WebElementSelector(buildVariableName(element), "[data-test='" + element.getDataTest() + "']",
+        // The attribute NAME is taken from the element, not from a constant: a site that
+        // uses data-qa must produce [data-qa='...']. Hard-coding "data-test" here emitted a
+        // locator that was syntactically valid and could never match on any such site —
+        // the same silent-failure class as the tag-agnostic XPath fallback fixed earlier.
+        String attributeName = element.getAutomationAttributeName();
+        return new WebElementSelector(buildVariableName(element),
+                "[" + attributeName + "='" + element.getDataTest() + "']",
                 "css", element.getTagName(), elementHasText(element), "dataTest");
     }
 
     private WebElementSelector tryId(ExtractedElement element) {
         if (element.getId() == null || element.getId().isEmpty()) return null;
-        return new WebElementSelector(buildVariableName(element), "#" + element.getId(),
+        // Attribute form rather than "#id": an id may legally contain "." or "(" — SauceDemo
+        // has id="add-to-cart-test.allthethings()-t-shirt-(red)" — which is not a valid CSS
+        // id fragment. [id='...'] is the equivalent form that is always valid.
+        return new WebElementSelector(buildVariableName(element), "[id='" + element.getId() + "']",
                 "css", element.getTagName(), elementHasText(element), "id");
     }
 

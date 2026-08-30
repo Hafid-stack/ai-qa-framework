@@ -7,9 +7,10 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  # Fast, deterministic gate: the generation pipeline's own unit tests. No browser, no
+  # network, no live site — so a red build here is always a defect in this repository.
+  pipeline-unit-tests:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,7 +22,35 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Run tests
+      - name: Run offline pipeline tests
+        run: mvn -B test -Dsurefire.suiteXmlFiles=testng-offline.xml
+
+  # Full suite, including the UI and API tests that drive real browsers against live sites.
+  # Reported separately because a failure here can mean an external outage rather than a
+  # regression, and the two signals should not be confused.
+  full-suite:
+    runs-on: ubuntu-latest
+    needs: pipeline-unit-tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run full test suite
         env:
           CI: true
-        run: mvn clean test
+        run: mvn -B clean test
+
+      - name: Publish test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          if-no-files-found: ignore
