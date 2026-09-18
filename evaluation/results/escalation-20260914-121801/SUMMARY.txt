@@ -1,0 +1,68 @@
+Experiment E2 — confidence-gated escalation
+Run at: 2026-09-14 11:19:25 UTC
+Model:  gemini-3.1-flash-lite
+
+PIPELINE A  P2-home
+  total selectors        : 11
+  low-confidence (gated) : 10
+  model calls made       : 10
+  prompt tokens (sum)    : 2026
+  output tokens (sum)    : 716
+  total tokens  (sum)    : 2742
+  model time    (sum ms) : 10399
+
+PIPELINE A  P3-products
+  total selectors        : 13
+  low-confidence (gated) : 10
+  model calls made       : 10
+  prompt tokens (sum)    : 2026
+  output tokens (sum)    : 692
+  total tokens  (sum)    : 2718
+  model time    (sum ms) : 8838
+
+PIPELINE A  P4-login
+  total selectors        : 7
+  low-confidence (gated) : 0
+  model calls made       : 0
+  prompt tokens (sum)    : 0
+  output tokens (sum)    : 0
+  total tokens  (sum)    : 0
+  model time    (sum ms) : 0
+
+PIPELINE A  P5-contact
+  total selectors        : 2
+  low-confidence (gated) : 1
+  model calls made       : 1
+  prompt tokens (sum)    : 204
+  output tokens (sum)    : 59
+  total tokens  (sum)    : 263
+  model time    (sum ms) : 925
+
+PIPELINE B  P2-home
+  model calls made       : 1
+  prompt tokens          : 101030
+  output tokens          : 537
+  total tokens           : 101567
+  model time       (ms)  : 3101
+
+PIPELINE B  P3-products
+  model calls made       : 1
+  prompt tokens          : 120097
+  output tokens          : 737
+  total tokens           : 120834
+  model time       (ms)  : 3930
+
+PIPELINE B  P4-login
+  model calls made       : 1
+  prompt tokens          : 62086
+  output tokens          : 463
+  total tokens           : 62549
+  model time       (ms)  : 2750
+
+PIPELINE B  P5-contact
+  model calls made       : 1
+  prompt tokens          : 41336
+  output tokens          : 732
+  total tokens           : 42068
+  model time       (ms)  : 3039
+

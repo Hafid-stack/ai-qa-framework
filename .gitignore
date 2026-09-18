@@ -5,6 +5,7 @@ target/
 .kotlin
 
 ### IntelliJ IDEA ###
+.idea/
 .idea/modules.xml
 .idea/jarRepositories.xml
 .idea/compiler.xml
@@ -38,13 +39,38 @@ build/
 ### Mac OS ###
 .DS_Store
 
+### Office lock files ###
+~$*
+
 ### Project-specific ###
 *.log
 test-output/
 reports/
-# Debug dump written by cli.Main on every pipeline run — not meaningful to track
+# Debug dump written by cli.Main on every pipeline run - not meaningful to track
 page_dump.html
 
-# Environment variables / secrets (important once we add the AI API key)
+# Environment variables / secrets. NEVER remove this line: .env holds live
+# GEMINI_API_KEY and OPENAI_API_KEY values.
 .env
-.idea/
+
+### Submission deliverables ###
+# The report, the slides and the workbook are submission artefacts, not source.
+# They live on disk and are handed in separately; keeping 6 MB of binaries in
+# version control means every edit to a paragraph pushes a new copy.
+PFE_Report.docx
+PFE_Report.pdf
+PFE_Defence.pptx
+PFE_Defence.pdf
+PFE_Cover_Page.docx
+PFE_Cover_Page.pdf
+PFE_Evaluation_Results.xlsx
+
+### Report/slide build scripts (kept on disk for reproducibility, not tracked) ###
+report-build/
+
+# LibreOffice render output from report-build scripts
+render/
+
+# macOS/FUSE temp files and personal handover notes
+.fuse_hidden*
+HANDOFF.md

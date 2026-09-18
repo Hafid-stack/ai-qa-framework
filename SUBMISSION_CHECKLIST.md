@@ -1,65 +1,135 @@
-# What is done, and what only you can do
+# Submission checklist
 
-## Done — no action needed
+Defence: **25 September 2026**. Updated 14 September 2026.
 
-**Software**
-- `data-qa` sites no longer receive an unmatchable `[data-test='…']` locator; the attribute name travels with its value.
-- Component roles whose card *is* the interactive element are addressed through the root instead of searched inside it (this was failing on 100 % of instances).
-- Page text is now escaped for both languages it lands in — the Java string literal and the XPath expression — including the both-quote-kinds case, which falls back to `concat()`.
-- Component role naming is invariance-aware: text that is identical across every detected instance names a role; text that varies names nothing and the element is addressed by position. This is the remedy Chapter VI proposed for its own defect, now implemented.
-- `By.id`/attribute selectors used in place of `#id` fragments, so ids containing `.` or `(` — SauceDemo ships one — cannot produce an invalid selector.
-- Menu option 2 now reviews the same extraction option 1 emits (it previously reviewed a different, flat one).
-- `gson` declared explicitly in `pom.xml` instead of arriving transitively.
-- 37 offline unit tests over extraction, locator selection and code emission. Each defect above has a regression test named after the property it violated. All 37 pass.
-- CI split into a fast deterministic gate (`testng-offline.xml`) and the browser-driven suite, so a red build tells you which kind of failure it is.
-- Generated experiment artefacts moved out of `src/main/java` into `generated-output/`, where evidence belongs and where it cannot affect the build.
+---
 
-**Evaluation**
-- Every number in Chapter VI re-derived from the raw artefacts. All of them reproduce; the digests, line counts, field counts and token counts are exact.
-- Recall and precision, which had never been measured, now are — counted against the captured DOM.
-- Locator resolution measured in a real browser engine for all six artefacts, plus the corrected output (5/7 → 7/7).
-- Compilability re-verified against a stub of the real Selenium `By` API (A: 9/9, B: 1/3).
-- Cost converted to currency from Google's published price.
-- `evaluation/` holds scripts that recompute all of this offline; `evaluation/results/RESULTS.md` is a captured run.
-- Workbook filled for P1 and extended with defects D8–D12.
+## 1. Only you can do these
 
-**Report**
-- 22 real references added, all verified against the source; `Bibliography` chapter added; the "Annex A — Bibliography checklist" to-do list removed.
-- All 19 `⟦REF⟧` markers replaced with citations.
-- Figures renumbered into document order (they ran 1, 2, 3, 7, 5, 6, 8, 4, 9, 10, 11).
-- All 18 tables captioned and numbered.
-- Table of Contents, List of Figures and List of Tables added as real Word fields.
-- New section VI.8 reporting the post-campaign audit, including the defect that favours the baseline.
-- New section V.3.7 on testing the generator, which removes the "no unit tests" limitation.
-- `NFR-20` → `FR-20`; `Section VI.10` → `VI.11`; "Methods generated" relabelled to what was actually counted.
-- Chapter II repositioned against Karagöz et al. (2026), the closest published work — found during the literature search the report asked for.
-- Abstract and résumé now report the audit's findings in both directions.
+| # | What | Where | Notes |
+|---|------|-------|-------|
+| 1 | **Your full name** | report cover, and the footer of all 50 slides | Currently `⟦ VOTRE PRÉNOM ET NOM ⟧` / `[ YOUR NAME ]`. Send it to me and I'll do every occurrence in one pass. |
+| 2 | **Supervisor's name** | report cover, Remerciements, §I.2, slide 1 | Currently `⟦ NOM DE VOTRE ENCADRANT ⟧`. Four places in the report, one on the slides. |
+| 3 | **Jury members** | slide 1 | Optional — if you don't know them, I'll remove the block rather than leave placeholders. |
+| 4 | **Screenshot 1** — ExtentReports | §V.2.5 | Run `mvn -B clean test`, open `reports/ExtentReport.html`, screenshot the summary. For a failure screenshot, invert one assertion and re-run. |
+| 5 | **Screenshot 2** — GitHub Actions | §V.4 | A green run on github.com/Hafid-stack/ai-qa-framework → Actions. |
+| 6 | **Screenshot 3** — Jenkins | §V.4 | `docker start jenkins`, then the pipeline view with the three stages. |
+| 7 | **Personal assessment** | end of General Conclusion | Four to six sentences in your own voice. A draft is below — rewrite it, don't submit mine. |
 
-## Only you can do these
+Send me 1–3 and I'll apply them. For 4–6, send me the image files and I'll place them under the
+right captions.
 
-1. **Title page** — defence date, your full name, your supervisor's name(s), and the ENSET logo.
-2. **Dédicace** — two to six lines.
-3. **Remerciements** — ENSET administration and faculty, your supervisor by name, the jury, your family, your promotion.
-4. **Host organisation** (§I.2) — if there was one, describe it; if the work was purely academic, say so explicitly. A stated context beats an absent one.
-5. **Personal assessment** (end of the general conclusion) — four to six sentences in your own voice. Write it last, write it yourself; a jury reads this paragraph closely and it must not sound like the rest of the report.
-6. **Three screenshots** — the ExtentReports run, a green GitHub Actions run, the Jenkins pipeline view. Note that the retained ExtentReport (15 July, 11 tests) shows no failures, so if you want the failure-handling screenshot the report describes, re-run with one assertion deliberately inverted.
-7. **Update the three field lists** — open the report in Word, select all, press F9. The document is flagged to refresh fields on open, but confirm it worked before printing.
+---
 
-## Three small housekeeping steps on your machine
+## 2. Draft personal assessment — rewrite this in your own words
 
-1. **Delete `_to_delete/`.** It holds the six generated experiment artefacts that moved out of `src/main/java/pages/generated/` into `generated-output/pipeline-a/`, plus the transfer archive. I can write to your disk but not delete from it, so they were moved there rather than removed. Check the contents, then delete the folder.
-2. **Move `ci.yml.updated` into place**: `mv ci.yml.updated .github/workflows/ci.yml`. That directory is write-protected for remote tools, so the new workflow could not be written directly.
-3. **Make the evaluation script executable if git drops the bit**: `chmod +x evaluation/check-compilability.sh`.
+> I began this project able to write Selenium tests but without much sense of why test suites
+> decay, and I finish it believing the answer is almost entirely about locators. The part I
+> found hardest was not writing the parser but diagnosing what it produced: the browser's
+> password dialog that stole focus mid-test was invisible to Selenium because it is not part
+> of the page, and I spent far longer on that than on any code I wrote. What I would do
+> differently is test the generator itself from the beginning rather than testing only what it
+> generated — two of the defects in Chapter VI were sitting in output I had read and approved.
+> If I continued this work I would send the model the structured skeleton rather than raw
+> markup, because the one thing the measurements show it is genuinely good at is naming, and
+> that is the cheapest thing to ask it for.
 
-## Two things to check before you hand anything in
+Every claim in that paragraph corresponds to something that actually happened in the project,
+so it is safe ground — but a jury reads this paragraph closely and it should sound like you.
 
-- **`.env` is in your project folder and holds live `OPENAI_API_KEY` and `GEMINI_API_KEY` values.** It is correctly git-ignored and was never committed, but exclude it from any archive you submit, and rotate both keys after the defence.
-- **Run `mvn -B test -Dsurefire.suiteXmlFiles=testng-offline.xml` once on your machine.** The 37 unit tests were executed and pass here, but this environment could not reach Maven Central, so they have not run against the real jsoup, TestNG and Selenium jars. That single command confirms it.
+---
 
-## Two questions a jury is likely to ask
+## 3. Done — no action needed
 
-**"Your evaluation covers one page. Why should I believe any of it?"**
-The findings that rest on one page are categorical, not statistical: the baseline is non-deterministic, it invoked a Selenium method that does not exist, and the structured pipeline escalated nothing and so cost nothing. Each is established by direct observation and would not be strengthened by more pages. The report says exactly this, and says explicitly that "compiles one time in three" describes those three runs and is not a rate. Section VI.11 is where you point.
+**Document**
+- [x] A4, 2.5 cm margins (the file previously specified no page size at all)
+- [x] Page numbers in the footer, suppressed on the cover
+- [x] Table of Contents, List of Figures, List of Tables — all three built as real text with
+      real page numbers. **All 125 entries verified against the rendered PDF.**
+- [x] Cover: ENSET logo, "Master d'Université", "Ingénierie Informatique – Big Data et Cloud
+      Computing (II-BDCC)", new title, defence date
+- [x] Dédicace and Remerciements written
+- [x] §I.2 academic-context paragraph written
+- [x] All 12 figures and 23 tables referenced in the prose (there were zero references before)
+- [x] Figures 1, 4 and 7 redrawn — Figure 7 had been 13.4 in tall, taller than an A4 page
 
-**"You designed the metrics, built one of the systems, and did the measuring."**
-Acknowledged in §III.6.5, and answered by three things you can point at: the metric set was fixed before the campaign; the audit in §VI.8 reports a defect in your own pipeline that is worse than anything you reported in the baseline, and a result that favours the baseline; and every artefact is retained with scripts that let anyone recompute the numbers offline.
+**Academic**
+- [x] **§VI.10 — Experiment E2**, the escalation experiment, with Tables 18–19 and Figure 12
+- [x] RQ2 answer rewritten on real evidence
+- [x] Abstract, Résumé, threats-to-validity and both conclusions updated to match
+- [x] Bibliography renumbered so "order of first citation" is actually true
+- [x] Reference [7] updated from arXiv preprint to the ICST 2026 conference paper
+- [x] Defects D1–D13 all defined; Appendix C consolidates them
+- [x] Appendix A — requirements traceability, every FR/NFR traced to a file and a test
+- [x] Appendix B — the 49-test suite, class by class
+- [x] §V.6 — security and secret management
+- [x] FR-6 / NFR-7 credential contradiction resolved
+
+**Slides**
+- [x] Title, degree, filière, defence date
+- [x] Slide 39 rebuilt on Experiment E2 — numbers, narrative and chart
+- [x] Slide 42 RQ2 line corrected
+- [x] Speaker notes for both rewritten
+
+**Repo**
+- [x] `.gitignore` rewritten; `.env` still ignored and still uncommitted
+- [ ] Run the `git rm --cached` block (see §5) to stop pushing 6 MB of documents
+
+---
+
+## 4. Security — do this after the defence
+
+`.env` in the project folder holds **live** `OPENAI_API_KEY` and `GEMINI_API_KEY` values.
+
+- It is git-ignored and has never been committed — the repository history contains no key.
+- **Do not** include `.env` in anything you hand in.
+- **Rotate both keys after the defence**, since the folder will have been copied around.
+
+---
+
+## 5. Repo cleanup
+
+```
+cd ~/PFE-QA-AI/ai-qa-framework/ai-qa-framework
+git rm --cached PFE_Report.docx PFE_Report.pdf PFE_Defence.pptx PFE_Defence.pdf \
+                PFE_Cover_Page.docx PFE_Cover_Page.pdf PFE_Evaluation_Results.xlsx
+git add -A
+git commit -m "Untrack submission deliverables; add Experiment E2 evaluation artefacts"
+git push
+```
+
+`--cached` removes them from git's tracking only. The files stay on your disk.
+
+---
+
+## 6. Checking the project still works
+
+```
+mvn -B clean test
+```
+49 tests, 0 failures. That is the authoritative check.
+
+```
+mvn -B test -Dsurefire.suiteXmlFiles=testng-offline.xml
+```
+37 tests, no browser, no network — a few seconds. Note it is `-Dsurefire.suiteXmlFiles`, not
+`-DsuiteXmlFile`, which is silently ignored.
+
+```
+bash evaluation/run-escalation-experiment.sh
+```
+Re-runs Experiment E2 end to end. Costs a few cents of Gemini credit.
+
+---
+
+## 7. What the folders are
+
+| Folder | What it is |
+|--------|-----------|
+| `src/main/java` | The framework and the generation pipeline — the project itself |
+| `src/test/java` | 49 tests: 37 for the pipeline, 9 UI, 2 API, 1 end-to-end on generated page objects |
+| `evaluation/` | Scripts that recompute every number in Chapter VI offline, the Selenium API stub used to check compilability, and the Experiment E2 runner with its results |
+| `generated-output/` | Raw experimental evidence: what each pipeline actually emitted, and the captured page both were given. Kept outside `src/` so unvalidated model output can never break the build |
+| `reports/` | ExtentReports HTML, regenerated on every run (git-ignored) |
+| `target/` | Maven build output (git-ignored) |
+| `page_dump.html` | Debug dump the CLI writes on every run (git-ignored) |

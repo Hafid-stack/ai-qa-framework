@@ -1,0 +1,43 @@
+=== AI-QA Framework: Pipeline Runner ===
+
+1 - Pipeline A: structured extraction + generate Page Object
+2 - Pipeline A + AI judgment-call review of low-confidence selectors
+3 - Pipeline B: naive raw-HTML AI baseline
+Choose an option (1/2/3): Enter the URL to test: Enter a class name for the generated Page Object (e.g. LoginPageAI): Does reaching this page require logging in first? (y/n): Sep 14, 2026 12:18:12 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 152
+Sep 14, 2026 12:18:12 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 152.0.7977.83. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.21.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+HTML dumped to page_dump.html
+Total selectors: 11
+Low-confidence selectors to review: 10
+Use Gemini (g) or local Ollama (o) for review? Reviewing: ContinueShopping (Continue Shopping)
+[GEMINI-METRICS] model=gemini-3.1-flash-lite promptTokens=198 outputTokens=68 totalTokens=266 elapsedMs=1102
+  -> Keep: true | Methods: [click, isDisplayed] | Confidence: low | Concern: The XPath uses visible text, which is brittle and will break if the UI language or button label changes.
+Reviewing: 6Polo ((6)Polo)
+[GEMINI-METRICS] model=gemini-3.1-flash-lite promptTokens=203 outputTokens=69 totalTokens=272 elapsedMs=825
+  -> Keep: false | Methods: [click, getText, isDisplayed] | Confidence: low | Concern: The variable name starts with a number and the selector relies solely on volatile visible text.
+Reviewing: 5HM ((5)H&M)
+[GEMINI-METRICS] model=gemini-3.1-flash-lite promptTokens=203 outputTokens=76 totalTokens=279 elapsedMs=1109
+  -> Keep: false | Methods: [click, getText, isDisplayed] | Confidence: low | Concern: The variable name starts with a number which is invalid in many programming languages, and the XPath relies on unstable text matching.
+Reviewing: 5Madame ((5)Madame)
+[GEMINI-METRICS] model=gemini-3.1-flash-lite promptTokens=201 outputTokens=67 totalTokens=268 elapsedMs=1200
+  -> Keep: false | Methods: [click, getText, isDisplayed] | Confidence: low | Concern: The variable name starts with a number, which is invalid in most programming languages, and the selector is based on unstable text.
+Reviewing: 3MastHarbour ((3)Mast & Harbour)
+[GEMINI-METRICS] model=gemini-3.1-flash-lite promptTokens=205 outputTokens=78 totalTokens=283 elapsedMs=1204
+  -> Keep: true | Methods: [click, getText, isDisplayed] | Confidence: low | Concern: The variable name starts with a number, which is invalid syntax in many programming languages, and the XPath relies on unstable visible text.
+Reviewing: 4Babyhug ((4)Babyhug)
+[GEMINI-METRICS] model=gemini-3.1-flash-lite promptTokens=203 outputTokens=69 totalTokens=272 elapsedMs=1043
+  -> Keep: false | Methods: [click, getText, isDisplayed] | Confidence: low | Concern: The variable name starts with a digit, which is invalid in many programming languages, and the selector is a low-confidence text match.
+Reviewing: 3AllenSollyJunior ((3)Allen Solly Junior)
+[GEMINI-METRICS] model=gemini-3.1-flash-lite promptTokens=207 outputTokens=79 totalTokens=286 elapsedMs=1369
+  -> Keep: false | Methods: [click, getText, isDisplayed] | Confidence: low | Concern: The variable name starts with a number and the selector relies on fragile visible text, which is likely to break if the UI content changes.
+Reviewing: 3KookieKids ((3)Kookie Kids)
+[GEMINI-METRICS] model=gemini-3.1-flash-lite promptTokens=205 outputTokens=73 totalTokens=278 elapsedMs=858
+  -> Keep: false | Methods: [click, isDisplayed] | Confidence: low | Concern: The variable name starts with a number, which is invalid syntax in many programming languages, and the selector relies on fragile visible text.
+Reviewing: 5Biba ((5)Biba)
+[GEMINI-METRICS] model=gemini-3.1-flash-lite promptTokens=203 outputTokens=68 totalTokens=271 elapsedMs=805
+  -> Keep: false | Methods: [click, getText, isDisplayed] | Confidence: low | Concern: The variable name starts with a number, which is invalid in most programming languages, and the XPath selector is based on unstable text.
+Reviewing: ViewCart (View Cart)
+[GEMINI-METRICS] model=gemini-3.1-flash-lite promptTokens=198 outputTokens=69 totalTokens=267 elapsedMs=884
+  -> Keep: true | Methods: [click, isDisplayed] | Confidence: low | Concern: Using XPath with visible text is brittle and prone to breakage if the site's localization or UI labels change.
+Written: src/main/java/pages/generated/EvalHomeP2.java

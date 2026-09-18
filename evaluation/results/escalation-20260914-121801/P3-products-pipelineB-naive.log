@@ -1,0 +1,11 @@
+=== AI-QA Framework: Pipeline Runner ===
+
+1 - Pipeline A: structured extraction + generate Page Object
+2 - Pipeline A + AI judgment-call review of low-confidence selectors
+3 - Pipeline B: naive raw-HTML AI baseline
+Choose an option (1/2/3): Enter the URL to test: Enter a class name for the generated Page Object (e.g. LoginPageAI): Does reaching this page require logging in first? (y/n): Sep 14, 2026 12:18:52 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 152
+Sep 14, 2026 12:18:52 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 152.0.7977.83. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.21.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+[GEMINI-METRICS] model=gemini-3.1-flash-lite promptTokens=120097 outputTokens=737 totalTokens=120834 elapsedMs=3930
+Written: generated-output/naive/EvalProductsP3Naive.java

@@ -234,5 +234,7 @@ public class Main {
         java.nio.file.Files.createDirectories(java.nio.file.Paths.get(folder));
         java.nio.file.Files.writeString(filePath, content);
         System.out.println("Written: " + path);
+
     }
+
 }
