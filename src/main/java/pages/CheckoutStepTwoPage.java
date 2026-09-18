@@ -2,7 +2,6 @@ package pages;
 
 import base.BasePage;
 import org.openqa.selenium.By;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 
 public class CheckoutStepTwoPage extends BasePage {
@@ -18,14 +17,7 @@ public class CheckoutStepTwoPage extends BasePage {
         return countElements(inventoryItemLocator);
     }
     public boolean isCheckoutStepTwoPageDisplayed(){
-        // Wait for the page to load after "Continue": checking instantly
-        // failed on the slower GitHub Actions runner (race condition).
-        try {
-            waitForVisible(checkoutStepTwoContainer);
-            return true;
-        } catch (TimeoutException e) {
-            return false;
-        }
+        return isDisplayedAfterWait(checkoutStepTwoContainer);
     }
     public void clickContinue(){
         click(finishBtn);

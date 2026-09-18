@@ -62,6 +62,30 @@ public class BasePage {
         }
     }
 
+    /**
+     * Like isDisplayed, but first waits (up to the normal timeout) for the element.
+     * Use it for "has the page loaded?" checks that run right after a click or a
+     * navigation, where checking instantly is a race the test can lose.
+     */
+    protected boolean isDisplayedAfterWait(By locator) {
+        try {
+            waitForVisible(locator);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Waits until at least one element matches, then returns them all. */
+    protected java.util.List<WebElement> waitForAtLeastOne(By locator) {
+        try {
+            wait.until(ExpectedConditions.numberOfElementsToBeMoreThan(locator, 0));
+        } catch (Exception e) {
+            // fall through: the caller receives an empty list and fails with a clear message
+        }
+        return driver.findElements(locator);
+    }
+
     protected void navigateTo(String url) {
         driver.get(url);
     }

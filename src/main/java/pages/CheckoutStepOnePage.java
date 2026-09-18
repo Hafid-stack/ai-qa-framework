@@ -16,7 +16,7 @@ public class CheckoutStepOnePage extends BasePage {
     }
 
     public boolean isCheckoutFormDisplayed(){
-        return isDisplayed(checkoutContainer) && isDisplayed(firstNameField);
+        return isDisplayedAfterWait(checkoutContainer) && isDisplayed(firstNameField);
     }
 
     public void addCustomerDetails(CustomerDetail customerDetail){

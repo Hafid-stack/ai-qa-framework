@@ -18,7 +18,7 @@ public class CartPage extends BasePage {
 
 
     public Boolean isCartDisplayed(){
-        return isDisplayed(cartContainer);
+        return isDisplayedAfterWait(cartContainer);
     }
     public Boolean isProductInCart(String productName){
 

@@ -51,6 +51,16 @@ public class BaseTest {
         options.addArguments("--guest");
         options.addArguments("--window-size=1920,1080");
         options.addArguments("--disable-features=PasswordLeakDetection");
+        // automationexercise.com serves Google full-page ads ("#google_vignette") that can
+        // swallow a click and leave the test on the wrong page. Make the ad hosts
+        // unresolvable so the ads never load. The sites under test are not affected.
+        options.addArguments("--host-resolver-rules="
+                + "MAP *.googlesyndication.com ~NOTFOUND, "
+                + "MAP *.doubleclick.net ~NOTFOUND, "
+                + "MAP *.adtrafficquality.google ~NOTFOUND, "
+                + "MAP adservice.google.com ~NOTFOUND, "
+                + "MAP *.googletagservices.com ~NOTFOUND, "
+                + "MAP *.googleadservices.com ~NOTFOUND");
         options.setExperimentalOption("prefs", Map.of(
                 "profile.password.manager.leak.detection", false,
                 "credentials_enable_service", false,

@@ -22,7 +22,7 @@ public class InventoryPage extends BasePage {
 
 
     public List<String> getAvailableProductIds() {
-        List<WebElement> buttons = driver.findElements(By.cssSelector("[data-test^='" + PREFIX + "']"));
+        List<WebElement> buttons = waitForAtLeastOne(By.cssSelector("[data-test^='" + PREFIX + "']"));
         List<String> productIds = new ArrayList<>();
         for (WebElement btn : buttons) {
             String fullValue = btn.getAttribute("data-test");
@@ -42,7 +42,7 @@ public class InventoryPage extends BasePage {
         return chosenId; // return it so the test can assert on it later
     }
     public boolean isLoaded() {
-        return isDisplayed(inventoryContainer);
+        return isDisplayedAfterWait(inventoryContainer);
     }
     public void clickCartButton() {
 
