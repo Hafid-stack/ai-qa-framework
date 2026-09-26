@@ -64,6 +64,13 @@ PFE_Defence.pdf
 PFE_Cover_Page.docx
 PFE_Cover_Page.pdf
 PFE_Evaluation_Results.xlsx
+# Any slide deck or Office file (defence versions, backups, decks from other students)
+*.pptx
+*.docx
+*.xlsx
+# AI-assistant working notes and previews, not project documentation
+Claude outputs/
+SUBMISSION_CHECKLIST.md
 
 ### Report/slide build scripts (kept on disk for reproducibility, not tracked) ###
 report-build/

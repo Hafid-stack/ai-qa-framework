@@ -68,6 +68,20 @@ public class PageObjectGeneratorTest {
     }
 
     @Test
+    public void submitInputsGetAClickMethodWhileTextInputsKeepATypeMethod() {
+        String source = generator.generateClassSource("P", List.of(
+                new WebElementSelector("LoginButton", "[data-test='login-button']", "css", "input",
+                        false, "dataTest", "submit"),
+                new WebElementSelector("Username", "[data-test='username']", "css", "input",
+                        false, "dataTest", "text")));
+
+        Assert.assertTrue(source.contains("public void clickLoginButton() {"),
+                "SauceDemo's <input type=\"submit\"> login button must be clicked, not typed into");
+        Assert.assertFalse(source.contains("typeLoginButton"));
+        Assert.assertTrue(source.contains("public void typeUsername(String value) {"));
+    }
+
+    @Test
     public void aTextAccessorIsEmittedOnlyForLinksThatActuallyCarryText() {
         String withText = generator.generateClassSource("P", List.of(
                 selector("Cart", "[data-test='cart']", "css", "a", true, "dataTest")));

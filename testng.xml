@@ -36,6 +36,7 @@
     <test name="Generated Page Objects Demo">
         <classes>
             <class name="ui.generated.AutomationExerciseGeneratedFlowTest"/>
+            <class name="ui.generated.SauceDemoGeneratedLoginTest"/>
         </classes>
     </test>
 </suite>

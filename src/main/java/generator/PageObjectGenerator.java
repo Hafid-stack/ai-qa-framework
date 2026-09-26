@@ -161,6 +161,15 @@ public class PageObjectGenerator {
 
         switch (selector.getElementCategory()) {
             case "input":
+                // <input type="submit"> (SauceDemo's login button) and the other non-text
+                // input types are clicked, not typed into — give them the button method.
+                String inputType = selector.getInputType() == null ? "" : selector.getInputType().toLowerCase();
+                if (Set.of("submit", "button", "reset", "image", "checkbox", "radio").contains(inputType)) {
+                    methods.append("    public void click").append(methodSuffix).append("() {\n");
+                    methods.append("        click(").append(fieldName).append(");\n");
+                    methods.append("    }\n\n");
+                    break;
+                }
                 methods.append("    public void type").append(methodSuffix).append("(String value) {\n");
                 methods.append("        type(").append(fieldName).append(", value);\n");
                 methods.append("    }\n\n");

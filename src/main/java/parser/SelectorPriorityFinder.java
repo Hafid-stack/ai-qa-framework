@@ -44,7 +44,8 @@ public class SelectorPriorityFinder {
         String attributeName = element.getAutomationAttributeName();
         return new WebElementSelector(buildVariableName(element),
                 "[" + attributeName + "='" + element.getDataTest() + "']",
-                "css", element.getTagName(), elementHasText(element), "dataTest");
+                "css", element.getTagName(), elementHasText(element), "dataTest",
+                inputTypeOf(element));
     }
 
     private WebElementSelector tryId(ExtractedElement element) {
@@ -53,13 +54,15 @@ public class SelectorPriorityFinder {
         // has id="add-to-cart-test.allthethings()-t-shirt-(red)" — which is not a valid CSS
         // id fragment. [id='...'] is the equivalent form that is always valid.
         return new WebElementSelector(buildVariableName(element), "[id='" + element.getId() + "']",
-                "css", element.getTagName(), elementHasText(element), "id");
+                "css", element.getTagName(), elementHasText(element), "id",
+                inputTypeOf(element));
     }
 
     private WebElementSelector tryName(ExtractedElement element) {
         if (element.getName() == null || element.getName().isEmpty()) return null;
         return new WebElementSelector(buildVariableName(element), "[name='" + element.getName() + "']",
-                "css", element.getTagName(), elementHasText(element), "name");
+                "css", element.getTagName(), elementHasText(element), "name",
+                inputTypeOf(element));
     }
 
     private WebElementSelector tryLinkText(ExtractedElement element) {
@@ -71,11 +74,16 @@ public class SelectorPriorityFinder {
         String cleanText = element.getText().replaceAll("[^\\p{Print}]", "").trim();
 
         return new WebElementSelector(buildVariableName(element), cleanText,
-                "xpath", element.getTagName(), elementHasText(element), "text");
+                "xpath", element.getTagName(), elementHasText(element), "text",
+                inputTypeOf(element));
     }
 
     private boolean elementHasText(ExtractedElement element) {
         return element.getText() != null && !element.getText().isEmpty();
+    }
+
+    private String inputTypeOf(ExtractedElement element) {
+        return element.getType() == null ? "" : element.getType();
     }
 
     private String buildVariableName(ExtractedElement element) {
